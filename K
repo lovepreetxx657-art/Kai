@@ -1,0 +1,480 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local VirtualUser = game:GetService("VirtualUser")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local activeCount = 0
+local gemEnabled = false
+local hatchEnabled = false
+local claimEnabled = false
+local clickEnabled = false
+local afkEnabled = false
+
+-- GUI Setup
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "SRTHub"
+screenGui.ResetOnSpawn = false
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Parent = playerGui
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 320, 0, 420)
+mainFrame.Position = UDim2.new(0.5, -160, 0.5, -210)
+mainFrame.BackgroundColor3 = Color3.fromRGB(17, 17, 17)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = screenGui
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 14)
+mainCorner.Parent = mainFrame
+
+local header = Instance.new("Frame")
+header.Size = UDim2.new(1, 0, 0, 48)
+header.BackgroundColor3 = Color3.fromRGB(17, 17, 17)
+header.BorderSizePixel = 0
+header.Parent = mainFrame
+
+local headerCorner = Instance.new("UICorner")
+headerCorner.CornerRadius = UDim.new(0, 14)
+headerCorner.Parent = header
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Text = "SRT Hub"
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextSize = 16
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.Size = UDim2.new(0, 120, 1, 0)
+titleLabel.Position = UDim2.new(0, 16, 0, 0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleLabel.Parent = header
+
+local badgeFrame = Instance.new("Frame")
+badgeFrame.Size = UDim2.new(0, 80, 0, 26)
+badgeFrame.Position = UDim2.new(1, -96, 0.5, -13)
+badgeFrame.BackgroundColor3 = Color3.fromRGB(31, 61, 31)
+badgeFrame.BorderSizePixel = 0
+badgeFrame.Parent = header
+
+local badgeCorner = Instance.new("UICorner")
+badgeCorner.CornerRadius = UDim.new(0, 13)
+badgeCorner.Parent = badgeFrame
+
+local badgeLabel = Instance.new("TextLabel")
+badgeLabel.Text = "0 active"
+badgeLabel.Font = Enum.Font.GothamBold
+badgeLabel.TextSize = 12
+badgeLabel.TextColor3 = Color3.fromRGB(76, 175, 80)
+badgeLabel.Size = UDim2.new(1, 0, 1, 0)
+badgeLabel.BackgroundTransparency = 1
+badgeLabel.Parent = badgeFrame
+
+local divider = Instance.new("Frame")
+divider.Size = UDim2.new(1, 0, 0, 1)
+divider.Position = UDim2.new(0, 0, 0, 48)
+divider.BackgroundColor3 = Color3.fromRGB(42, 42, 42)
+divider.BorderSizePixel = 0
+divider.Parent = mainFrame
+
+local scrollFrame = Instance.new("ScrollingFrame")
+scrollFrame.Size = UDim2.new(1, 0, 1, -49)
+scrollFrame.Position = UDim2.new(0, 0, 0, 49)
+scrollFrame.BackgroundTransparency = 1
+scrollFrame.BorderSizePixel = 0
+scrollFrame.ScrollBarThickness = 0
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 420)
+scrollFrame.Parent = mainFrame
+
+local listLayout = Instance.new("UIListLayout")
+listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+listLayout.Parent = scrollFrame
+
+local function updateBadge()
+    badgeLabel.Text = activeCount .. " active"
+end
+
+local function makeSection(text, order)
+    local lbl = Instance.new("TextLabel")
+    lbl.Text = text
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 10
+    lbl.TextColor3 = Color3.fromRGB(85, 85, 85)
+    lbl.Size = UDim2.new(1, 0, 0, 32)
+    lbl.BackgroundTransparency = 1
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.LayoutOrder = order
+    local pad = Instance.new("UIPadding")
+    pad.PaddingLeft = UDim.new(0, 18)
+    pad.PaddingTop = UDim.new(0, 12)
+    pad.Parent = lbl
+    lbl.Parent = scrollFrame
+end
+
+local function makeToggleRow(title, desc, order, onEnable, onDisable)
+    local row = Instance.new("Frame")
+    row.Size = UDim2.new(1, 0, 0, 56)
+    row.BackgroundTransparency = 1
+    row.LayoutOrder = order
+    row.Parent = scrollFrame
+
+    local divLine = Instance.new("Frame")
+    divLine.Size = UDim2.new(1, 0, 0, 1)
+    divLine.Position = UDim2.new(0, 0, 1, -1)
+    divLine.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    divLine.BorderSizePixel = 0
+    divLine.Parent = row
+
+    local titleLbl = Instance.new("TextLabel")
+    titleLbl.Text = title
+    titleLbl.Font = Enum.Font.Gotham
+    titleLbl.TextSize = 14
+    titleLbl.TextColor3 = Color3.fromRGB(220, 220, 220)
+    titleLbl.Size = UDim2.new(1, -70, 0, 22)
+    titleLbl.Position = UDim2.new(0, 18, 0, 8)
+    titleLbl.BackgroundTransparency = 1
+    titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+    titleLbl.Parent = row
+
+    local descLbl = Instance.new("TextLabel")
+    descLbl.Text = desc
+    descLbl.Font = Enum.Font.Gotham
+    descLbl.TextSize = 11
+    descLbl.TextColor3 = Color3.fromRGB(85, 85, 85)
+    descLbl.Size = UDim2.new(1, -70, 0, 16)
+    descLbl.Position = UDim2.new(0, 18, 0, 30)
+    descLbl.BackgroundTransparency = 1
+    descLbl.TextXAlignment = Enum.TextXAlignment.Left
+    descLbl.Parent = row
+
+    local toggleBg = Instance.new("Frame")
+    toggleBg.Size = UDim2.new(0, 44, 0, 26)
+    toggleBg.Position = UDim2.new(1, -58, 0.5, -13)
+    toggleBg.BackgroundColor3 = Color3.fromRGB(51, 51, 51)
+    toggleBg.BorderSizePixel = 0
+    toggleBg.Parent = row
+
+    local toggleCorner = Instance.new("UICorner")
+    toggleCorner.CornerRadius = UDim.new(0, 13)
+    toggleCorner.Parent = toggleBg
+
+    local knob = Instance.new("Frame")
+    knob.Size = UDim2.new(0, 20, 0, 20)
+    knob.Position = UDim2.new(0, 3, 0.5, -10)
+    knob.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    knob.BorderSizePixel = 0
+    knob.Parent = toggleBg
+
+    local knobCorner = Instance.new("UICorner")
+    knobCorner.CornerRadius = UDim.new(0, 10)
+    knobCorner.Parent = knob
+
+    local isOn = false
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 1, 0)
+    btn.BackgroundTransparency = 1
+    btn.Text = ""
+    btn.Parent = toggleBg
+
+    btn.MouseButton1Click:Connect(function()
+        isOn = not isOn
+        if isOn then
+            activeCount += 1
+            toggleBg.BackgroundColor3 = Color3.fromRGB(42, 74, 42)
+            knob.BackgroundColor3 = Color3.fromRGB(76, 175, 80)
+            knob:TweenPosition(UDim2.new(0, 21, 0.5, -10), "Out", "Quad", 0.15, true)
+            if onEnable then task.spawn(onEnable) end
+        else
+            activeCount = math.max(0, activeCount - 1)
+            toggleBg.BackgroundColor3 = Color3.fromRGB(51, 51, 51)
+            knob.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+            knob:TweenPosition(UDim2.new(0, 3, 0.5, -10), "Out", "Quad", 0.15, true)
+            if onDisable then task.spawn(onDisable) end
+        end
+        updateBadge()
+    end)
+end
+
+-- Helpers
+local function getRoot()
+    local char = player.Character or player.CharacterAdded:Wait()
+    return char:WaitForChild("HumanoidRootPart")
+end
+
+-- AFK GUI
+local afkGui = nil
+local afkStatusLabel = nil
+
+local function createAFKGui()
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "AFKBypassGui"
+    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    gui.Parent = game.CoreGui
+
+    local title = Instance.new("TextLabel")
+    title.Parent = gui
+    title.Active = true
+    title.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    title.Draggable = true
+    title.Position = UDim2.new(0.698, 0, 0.098, 0)
+    title.Size = UDim2.new(0, 370, 0, 52)
+    title.Font = Enum.Font.SourceSansSemibold
+    title.Text = "Thabro1"
+    title.TextColor3 = Color3.fromRGB(0, 255, 255)
+    title.TextSize = 30
+
+    local body = Instance.new("Frame")
+    body.Parent = title
+    body.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    body.Position = UDim2.new(0, 0, 1.019, 0)
+    body.Size = UDim2.new(0, 370, 0, 107)
+
+    local statusLbl = Instance.new("TextLabel")
+    statusLbl.Name = "StatusLabel"
+    statusLbl.Parent = body
+    statusLbl.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    statusLbl.Position = UDim2.new(0, 0, 0.158, 0)
+    statusLbl.Size = UDim2.new(0, 370, 0, 44)
+    statusLbl.Font = Enum.Font.ArialBold
+    statusLbl.Text = "Status: Active"
+    statusLbl.TextColor3 = Color3.fromRGB(0, 255, 255)
+    statusLbl.TextSize = 20
+
+    local credit = Instance.new("TextLabel")
+    credit.Parent = body
+    credit.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    credit.Position = UDim2.new(0, 0, 0.800, 0)
+    credit.Size = UDim2.new(0, 370, 0, 21)
+    credit.Font = Enum.Font.Arial
+    credit.Text = "Made by Thabro1"
+    credit.TextColor3 = Color3.fromRGB(0, 255, 255)
+    credit.TextSize = 20
+
+    return gui, statusLbl
+end
+
+-- Auto Claim helpers
+local function autoClickClaimButtons()
+    pcall(function()
+        local scrollingFrame = playerGui.MainUI.Menus.GiftsFrame.InnerFrame.ScrollingFrame
+        for _, child in ipairs(scrollingFrame:GetChildren()) do
+            local claimBtn = child:FindFirstChild("GiftInnerTemp") and child.GiftInnerTemp:FindFirstChild("ClaimButton")
+            if claimBtn then
+                claimBtn.MouseButton1Click:Fire()
+            end
+        end
+    end)
+end
+
+local function tryClaim(Network, index, giftType)
+    pcall(function()
+        Network:InvokeServer("ClaimGift", index)
+    end)
+    if giftType == "Boost" then
+        pcall(function() Network:InvokeServer("ClaimBoost", index) end)
+        pcall(function() Network:InvokeServer("ClaimReward", index) end)
+        pcall(function() Network:InvokeServer("Claim", index) end)
+    end
+    task.wait(0.3)
+    autoClickClaimButtons()
+end
+
+-- RenderStepped connection reference for auto click
+local clickConnection = nil
+
+-- Sections
+makeSection("FARM", 1)
+
+-- Auto Gem
+makeToggleRow("Auto Gem", "Teleports to gem spawners", 2,
+    function()
+        gemEnabled = true
+        while gemEnabled do
+            local root = getRoot()
+            local success, folder = pcall(function()
+                return workspace:WaitForChild("GemSpawners", 5):WaitForChild("Spawn", 5)
+            end)
+            if success and folder then
+                for _, obj in pairs(folder:GetDescendants()) do
+                    if not gemEnabled then break end
+                    if obj:IsA("BasePart") and string.lower(obj.Name) == "gem" then
+                        root.CFrame = obj.CFrame + Vector3.new(0, 3, 0)
+                        task.wait(0.01)
+                    end
+                end
+            end
+            task.wait(0.1)
+        end
+    end,
+    function()
+        gemEnabled = false
+    end
+)
+
+-- Auto Hatch
+makeToggleRow("Auto Hatch", "Presses T at Space Egg", 3,
+    function()
+        hatchEnabled = true
+        local root = getRoot()
+        local egg = workspace:WaitForChild("Eggs"):WaitForChild("Space Egg")
+        root.CFrame = egg:IsA("Model") and egg:GetPivot() or CFrame.new(egg.Position)
+        task.wait(1)
+        while hatchEnabled do
+            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.T, false, game)
+            task.wait(0.2)
+            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.T, false, game)
+            task.wait(3)
+        end
+    end,
+    function()
+        hatchEnabled = false
+    end
+)
+
+-- Auto Claim Rewards
+makeToggleRow("Auto Claim Rewards", "Claims gifts automatically", 4,
+    function()
+        claimEnabled = true
+        -- Watcher for any claim button appearing
+        task.spawn(function()
+            playerGui.DescendantAdded:Connect(function(obj)
+                if not claimEnabled then return end
+                if obj:IsA("TextButton") or obj:IsA("ImageButton") then
+                    local text = (obj.Text or ""):lower()
+                    local name = obj.Name:lower()
+                    if text == "claim" or name == "claimbutton" or name == "claim" then
+                        task.wait(0.15)
+                        pcall(function() obj.MouseButton1Click:Fire() end)
+                    end
+                end
+            end)
+        end)
+        -- ScrollingFrame watcher
+        task.spawn(function()
+            pcall(function()
+                local scrollingFrame = playerGui:WaitForChild("MainUI"):WaitForChild("Menus"):WaitForChild("GiftsFrame"):WaitForChild("InnerFrame"):WaitForChild("ScrollingFrame")
+                scrollingFrame.DescendantAdded:Connect(function(obj)
+                    if not claimEnabled then return end
+                    if obj.Name == "ClaimButton" then
+                        task.wait(0.1)
+                        pcall(function() obj.MouseButton1Click:Fire() end)
+                    end
+                end)
+            end)
+        end)
+        -- Main claim loop
+        local Network = require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Network"))
+        local GiftsData = require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Data"):WaitForChild("GiftsData"))
+        task.wait(3)
+        local claiming = {}
+        while claimEnabled do
+            task.wait(1)
+            local data
+            local success = pcall(function()
+                data = Network:InvokeServer("GetGiftData")
+            end)
+            if success and data then
+                local startTime = tonumber(data.t0) or os.time()
+                for index, gift in ipairs(GiftsData) do
+                    if not claimEnabled then break end
+                    if gift.Type ~= "Pet" and not claiming[index] then
+                        local claimed = data.GiftsClaimed and (
+                            data.GiftsClaimed[index] == true or
+                            data.GiftsClaimed[tostring(index)] == true
+                        )
+                        if not claimed then
+                            local remaining = gift.Time - (os.time() - startTime)
+                            if remaining <= 0 then
+                                claiming[index] = true
+                                pcall(function()
+                                    tryClaim(Network, index, gift.Type)
+                                end)
+                                task.wait(0.2)
+                                claiming[index] = nil
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end,
+    function()
+        claimEnabled = false
+    end
+)
+
+makeSection("ACTIONS", 5)
+
+-- Auto Click
+makeToggleRow("Auto Click", "400 CPS bottom-right", 6,
+    function()
+        clickEnabled = true
+        local Camera = workspace.CurrentCamera
+        local clicksPerSecond = 400
+        clickConnection = RunService.RenderStepped:Connect(function(deltaTime)
+            if clickEnabled then
+                local viewportSize = Camera.ViewportSize
+                local x = viewportSize.X - 10
+                local y = viewportSize.Y - 10
+                local clicksThisFrame = math.floor(clicksPerSecond * deltaTime)
+                for i = 1, clicksThisFrame do
+                    VirtualInputManager:SendMouseButtonEvent(x, y, 0, true, game, 0)
+                    VirtualInputManager:SendMouseButtonEvent(x, y, 0, false, game, 0)
+                end
+            end
+        end)
+    end,
+    function()
+        clickEnabled = false
+        if clickConnection then
+            clickConnection:Disconnect()
+            clickConnection = nil
+        end
+    end
+)
+
+makeSection("UTILITY", 7)
+
+-- AFK Bypass
+makeToggleRow("AFK Bypass", "Prevents idle kick", 8,
+    function()
+        afkEnabled = true
+        afkGui, afkStatusLabel = createAFKGui()
+        player.Idled:Connect(function()
+            if not afkEnabled then return end
+            VirtualUser:CaptureController()
+            VirtualUser:ClickButton2(Vector2.new())
+            if afkStatusLabel and afkStatusLabel.Parent then
+                afkStatusLabel.Text = "Roblox tried to kick you but we didn't let them :D"
+                task.wait(2)
+                if afkEnabled then
+                    afkStatusLabel.Text = "Status: Active"
+                end
+            end
+        end)
+    end,
+    function()
+        afkEnabled = false
+        if afkGui and afkGui.Parent then
+            afkGui:Destroy()
+            afkGui = nil
+            afkStatusLabel = nil
+        end
+    end
+)
+
+-- G key shortcut for gem
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if input.KeyCode == Enum.KeyCode.G then
+        gemEnabled = not gemEnabled
+        print("Gem Farm:", gemEnabled and "ON" or "OFF")
+    end
+end)
