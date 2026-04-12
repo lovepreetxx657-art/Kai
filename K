@@ -15,6 +15,7 @@ local claimEnabled = false
 local clickEnabled = false
 local afkEnabled = false
 local sellEnabled = false
+local fizzEnabled = false
 
 -- GUI Setup
 local screenGui = Instance.new("ScreenGui")
@@ -23,9 +24,20 @@ screenGui.ResetOnSpawn = false
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Parent = playerGui
 
--- ─────────────────────────────────────────────
--- MAIN COMBINED FRAME  (left panel + right panel side by side)
--- ─────────────────────────────────────────────
+-- Open/Close circle button
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(0, 36, 0, 36)
+toggleBtn.Position = UDim2.new(1, -46, 0, 10)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(26, 58, 26)
+toggleBtn.BorderSizePixel = 0
+toggleBtn.Text = "✕"
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextSize = 14
+toggleBtn.TextColor3 = Color3.fromRGB(76, 175, 80)
+toggleBtn.ZIndex = 10
+toggleBtn.Parent = screenGui
+Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(1, 0)
+
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 580, 0, 440)
 mainFrame.Position = UDim2.new(0.5, -290, 0.5, -220)
@@ -33,12 +45,16 @@ mainFrame.BackgroundColor3 = Color3.fromRGB(17, 17, 17)
 mainFrame.BorderSizePixel = 0
 mainFrame.Active = true
 mainFrame.Draggable = true
+mainFrame.Visible = true
 mainFrame.Parent = screenGui
 Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 14)
 
--- ─────────────────────────────────────────────
--- HEADER (spans full width)
--- ─────────────────────────────────────────────
+toggleBtn.MouseButton1Click:Connect(function()
+    mainFrame.Visible = not mainFrame.Visible
+    toggleBtn.Text = mainFrame.Visible and "✕" or "☰"
+end)
+
+-- Header
 local header = Instance.new("Frame")
 header.Size = UDim2.new(1, 0, 0, 48)
 header.BackgroundColor3 = Color3.fromRGB(17, 17, 17)
@@ -74,7 +90,6 @@ badgeLabel.Size = UDim2.new(1, 0, 1, 0)
 badgeLabel.BackgroundTransparency = 1
 badgeLabel.Parent = badgeFrame
 
--- horizontal divider under header
 local topDivider = Instance.new("Frame")
 topDivider.Size = UDim2.new(1, 0, 0, 1)
 topDivider.Position = UDim2.new(0, 0, 0, 48)
@@ -82,7 +97,6 @@ topDivider.BackgroundColor3 = Color3.fromRGB(42, 42, 42)
 topDivider.BorderSizePixel = 0
 topDivider.Parent = mainFrame
 
--- vertical divider splitting left/right panels
 local vertDivider = Instance.new("Frame")
 vertDivider.Size = UDim2.new(0, 1, 1, -49)
 vertDivider.Position = UDim2.new(0, 320, 0, 49)
@@ -90,25 +104,21 @@ vertDivider.BackgroundColor3 = Color3.fromRGB(42, 42, 42)
 vertDivider.BorderSizePixel = 0
 vertDivider.Parent = mainFrame
 
--- ─────────────────────────────────────────────
--- LEFT PANEL – toggle rows
--- ─────────────────────────────────────────────
+-- Left panel
 local scrollFrame = Instance.new("ScrollingFrame")
 scrollFrame.Size = UDim2.new(0, 320, 1, -49)
 scrollFrame.Position = UDim2.new(0, 0, 0, 49)
 scrollFrame.BackgroundTransparency = 1
 scrollFrame.BorderSizePixel = 0
 scrollFrame.ScrollBarThickness = 0
-scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 500)
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 560)
 scrollFrame.Parent = mainFrame
 
 local listLayout = Instance.new("UIListLayout")
 listLayout.SortOrder = Enum.SortOrder.LayoutOrder
 listLayout.Parent = scrollFrame
 
--- ─────────────────────────────────────────────
--- RIGHT PANEL – profile / leaderboard
--- ─────────────────────────────────────────────
+-- Right panel
 local rightPanel = Instance.new("Frame")
 rightPanel.Size = UDim2.new(0, 258, 1, -49)
 rightPanel.Position = UDim2.new(0, 322, 0, 49)
@@ -116,7 +126,6 @@ rightPanel.BackgroundTransparency = 1
 rightPanel.BorderSizePixel = 0
 rightPanel.Parent = mainFrame
 
--- Username label
 local nameLabel = Instance.new("TextLabel")
 nameLabel.Text = player.Name
 nameLabel.Font = Enum.Font.GothamBold
@@ -128,7 +137,6 @@ nameLabel.BackgroundTransparency = 1
 nameLabel.TextXAlignment = Enum.TextXAlignment.Center
 nameLabel.Parent = rightPanel
 
--- SRT HUB badge
 local tagFrame = Instance.new("Frame")
 tagFrame.Size = UDim2.new(0, 80, 0, 22)
 tagFrame.Position = UDim2.new(0.5, -40, 0, 44)
@@ -146,7 +154,6 @@ tagLabel.Size = UDim2.new(1, 0, 1, 0)
 tagLabel.BackgroundTransparency = 1
 tagLabel.Parent = tagFrame
 
--- Leaderboard section header
 local lbDiv = Instance.new("Frame")
 lbDiv.Size = UDim2.new(1, -24, 0, 1)
 lbDiv.Position = UDim2.new(0, 12, 0, 74)
@@ -165,7 +172,6 @@ lbTitle.BackgroundTransparency = 1
 lbTitle.TextXAlignment = Enum.TextXAlignment.Center
 lbTitle.Parent = rightPanel
 
--- Stat cards
 local stats = {
     {name = "Gems",        color = Color3.fromRGB(76, 175, 80),  path = "Gems"},
     {name = "Coins",       color = Color3.fromRGB(245, 197, 66), path = "Coins"},
@@ -255,7 +261,6 @@ for i, stat in ipairs(stats) do
     rankLabels[i] = {rankNum = rankNum, sVal = sVal, path = stat.path}
 end
 
--- Refresh footer
 local dotFrame = Instance.new("Frame")
 dotFrame.Size = UDim2.new(0, 6, 0, 6)
 dotFrame.Position = UDim2.new(0, 12, 1, -18)
@@ -274,9 +279,7 @@ refreshLabel.Position = UDim2.new(0, 24, 1, -20)
 refreshLabel.BackgroundTransparency = 1
 refreshLabel.Parent = rightPanel
 
--- ─────────────────────────────────────────────
--- HELPER FUNCTIONS
--- ─────────────────────────────────────────────
+-- Helper functions
 local function updateBadge()
     badgeLabel.Text = activeCount .. " active"
 end
@@ -382,9 +385,7 @@ local function getRoot()
     return char:WaitForChild("HumanoidRootPart")
 end
 
--- ─────────────────────────────────────────────
 -- AFK GUI
--- ─────────────────────────────────────────────
 local afkGui = nil
 local afkStatusLabel = nil
 
@@ -436,9 +437,6 @@ local function createAFKGui()
     return gui, statusLbl
 end
 
--- ─────────────────────────────────────────────
--- CLAIM HELPERS
--- ─────────────────────────────────────────────
 local function autoClickClaimButtons()
     pcall(function()
         local scrollingFrame = playerGui.MainUI.Menus.GiftsFrame.InnerFrame.ScrollingFrame
@@ -460,9 +458,6 @@ local function tryClaim(Network, index, giftType)
     autoClickClaimButtons()
 end
 
--- ─────────────────────────────────────────────
--- AUTO CLICK
--- ─────────────────────────────────────────────
 local clickConnection = nil
 
 local function stopAutoClick()
@@ -497,9 +492,7 @@ local function startAutoClick()
     end)
 end
 
--- ─────────────────────────────────────────────
--- TOGGLE ROWS
--- ─────────────────────────────────────────────
+-- Toggle rows
 makeSection("FARM", 1)
 
 makeToggleRow("Auto Gem", "Teleports to gem spawners", 2,
@@ -542,12 +535,9 @@ makeToggleRow("Auto Hatch", "Presses T at Lava Egg", 3,
     function() hatchEnabled = false end
 )
 
--- ── AUTO CLAIM REWARDS – checks every 5 minutes ──────────────────────────────
 makeToggleRow("Auto Claim Rewards", "Claims gifts every 5 min", 4,
     function()
         claimEnabled = true
-
-        -- Listen for new claim buttons appearing in the GUI
         task.spawn(function()
             playerGui.DescendantAdded:Connect(function(obj)
                 if not claimEnabled then return end
@@ -561,7 +551,6 @@ makeToggleRow("Auto Claim Rewards", "Claims gifts every 5 min", 4,
                 end
             end)
         end)
-
         task.spawn(function()
             pcall(function()
                 local sf = playerGui:WaitForChild("MainUI"):WaitForChild("Menus")
@@ -575,21 +564,14 @@ makeToggleRow("Auto Claim Rewards", "Claims gifts every 5 min", 4,
                 end)
             end)
         end)
-
-        -- Main claim loop — runs once immediately, then every 5 minutes (300 s)
         local Network = require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Network"))
         local GiftsData = require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Data"):WaitForChild("GiftsData"))
-
-        local CLAIM_INTERVAL = 300  -- 5 minutes in seconds
-
         local function doClaimPass()
             local data
             local ok = pcall(function() data = Network:InvokeServer("GetGiftData") end)
             if not (ok and data) then return end
-
             local startTime = tonumber(data.t0) or os.time()
             local claiming = {}
-
             for index, gift in ipairs(GiftsData) do
                 if not claimEnabled then break end
                 if gift.Type ~= "Pet" and not claiming[index] then
@@ -609,21 +591,15 @@ makeToggleRow("Auto Claim Rewards", "Claims gifts every 5 min", 4,
                 end
             end
         end
-
-        -- Initial short delay then first pass
         task.wait(3)
         doClaimPass()
-
-        -- Repeat every 5 minutes
         while claimEnabled do
             local elapsed = 0
-            while claimEnabled and elapsed < CLAIM_INTERVAL do
+            while claimEnabled and elapsed < 300 do
                 task.wait(1)
                 elapsed += 1
             end
-            if claimEnabled then
-                doClaimPass()
-            end
+            if claimEnabled then doClaimPass() end
         end
     end,
     function() claimEnabled = false end
@@ -651,16 +627,73 @@ makeToggleRow("Auto Sell", "Teleports to Lava sell zone", 5,
     function() sellEnabled = false end
 )
 
-makeSection("ACTIONS", 6)
+makeToggleRow("Auto Buy Fizz", "Buys best fizz every 5 sec", 6,
+    function()
+        fizzEnabled = true
+        local Network = require(ReplicatedStorage.Modules.Network)
+        local ItemData = require(ReplicatedStorage.Modules.Data.ItemData)
+        while fizzEnabled do
+            -- Teleport to shop
+            local char = player.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                pcall(function()
+                    hrp.CFrame = workspace.Touches.ShopZones.Lava.CFrame + Vector3.new(0, 5, 0)
+                end)
+            end
+            task.wait(1.5)
+            -- Get data
+            local ok, data = pcall(function()
+                return ReplicatedStorage.Remotes.GetData:InvokeServer()
+            end)
+            if ok and data then
+                local coins = data.Coins or 0
+                local ownedFlavors = data.Flavors or {}
+                -- Sort cheapest first
+                local sorted = {}
+                for name, info in pairs(ItemData.Flavor) do
+                    table.insert(sorted, {name = name, price = info.Price or 0})
+                end
+                table.sort(sorted, function(a, b) return a.price < b.price end)
+                -- Buy all affordable unowned
+                for _, flavor in ipairs(sorted) do
+                    if not fizzEnabled then break end
+                    local owned = false
+                    if ownedFlavors[flavor.name] == true then
+                        owned = true
+                    else
+                        for _, v in ipairs(ownedFlavors) do
+                            if v == flavor.name then owned = true break end
+                        end
+                    end
+                    if not owned and flavor.price <= coins then
+                        local buyOk, result = pcall(function()
+                            return Network:InvokeServer("BuyShop", "Flavors", flavor.name)
+                        end)
+                        if buyOk and result then
+                            coins = coins - flavor.price
+                            print("[SRT] Bought fizz:", flavor.name)
+                        end
+                        task.wait(0.3)
+                    end
+                end
+            end
+            task.wait(5)
+        end
+    end,
+    function() fizzEnabled = false end
+)
 
-makeToggleRow("Auto Click", "Fast clicks bottom-right", 7,
+makeSection("ACTIONS", 7)
+
+makeToggleRow("Auto Click", "Fast clicks bottom-right", 8,
     function() startAutoClick() end,
     function() stopAutoClick() end
 )
 
-makeSection("UTILITY", 8)
+makeSection("UTILITY", 9)
 
-makeToggleRow("AFK Bypass", "Prevents idle kick", 9,
+makeToggleRow("AFK Bypass", "Prevents idle kick", 10,
     function()
         afkEnabled = true
         afkGui, afkStatusLabel = createAFKGui()
@@ -685,9 +718,7 @@ makeToggleRow("AFK Bypass", "Prevents idle kick", 9,
     end
 )
 
--- ─────────────────────────────────────────────
--- HOTKEYS
--- ─────────────────────────────────────────────
+-- Hotkeys
 UserInputService.InputBegan:Connect(function(input, gp)
     if gp then return end
     if input.KeyCode == Enum.KeyCode.G then
@@ -704,9 +735,7 @@ UserInputService.InputBegan:Connect(function(input, gp)
     end
 end)
 
--- ─────────────────────────────────────────────
--- LEADERBOARD REFRESH (right panel)
--- ─────────────────────────────────────────────
+-- Leaderboard refresh
 task.spawn(function()
     local TARGET = string.lower(player.Name)
 
@@ -715,7 +744,6 @@ task.spawn(function()
             return workspace:WaitForChild("Leaderboards", 5):WaitForChild(lbPath, 5)
         end)
         if not ok or not lb then return "#??", "Error" end
-
         for _, desc in ipairs(lb:GetDescendants()) do
             if desc.Name == "Username" and (desc:IsA("TextLabel") or desc:IsA("TextButton")) then
                 local cleanText = string.lower(desc.Text:gsub("[%s@]", ""))
