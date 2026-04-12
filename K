@@ -14,6 +14,7 @@ local hatchEnabled = false
 local claimEnabled = false
 local clickEnabled = false
 local afkEnabled = false
+local sellEnabled = false
 
 -- GUI Setup
 local screenGui = Instance.new("ScreenGui")
@@ -22,25 +23,27 @@ screenGui.ResetOnSpawn = false
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Parent = playerGui
 
+-- ─────────────────────────────────────────────
+-- MAIN COMBINED FRAME  (left panel + right panel side by side)
+-- ─────────────────────────────────────────────
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 320, 0, 420)
-mainFrame.Position = UDim2.new(0.5, -160, 0.5, -210)
+mainFrame.Size = UDim2.new(0, 580, 0, 440)
+mainFrame.Position = UDim2.new(0.5, -290, 0.5, -220)
 mainFrame.BackgroundColor3 = Color3.fromRGB(17, 17, 17)
 mainFrame.BorderSizePixel = 0
 mainFrame.Active = true
 mainFrame.Draggable = true
 mainFrame.Parent = screenGui
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 14)
 
-local mainCorner = Instance.new("UICorner")
-mainCorner.CornerRadius = UDim.new(0, 14)
-mainCorner.Parent = mainFrame
-
+-- ─────────────────────────────────────────────
+-- HEADER (spans full width)
+-- ─────────────────────────────────────────────
 local header = Instance.new("Frame")
 header.Size = UDim2.new(1, 0, 0, 48)
 header.BackgroundColor3 = Color3.fromRGB(17, 17, 17)
 header.BorderSizePixel = 0
 header.Parent = mainFrame
-
 Instance.new("UICorner", header).CornerRadius = UDim.new(0, 14)
 
 local titleLabel = Instance.new("TextLabel")
@@ -60,7 +63,6 @@ badgeFrame.Position = UDim2.new(1, -96, 0.5, -13)
 badgeFrame.BackgroundColor3 = Color3.fromRGB(31, 61, 31)
 badgeFrame.BorderSizePixel = 0
 badgeFrame.Parent = header
-
 Instance.new("UICorner", badgeFrame).CornerRadius = UDim.new(0, 13)
 
 local badgeLabel = Instance.new("TextLabel")
@@ -72,26 +74,209 @@ badgeLabel.Size = UDim2.new(1, 0, 1, 0)
 badgeLabel.BackgroundTransparency = 1
 badgeLabel.Parent = badgeFrame
 
-local divider = Instance.new("Frame")
-divider.Size = UDim2.new(1, 0, 0, 1)
-divider.Position = UDim2.new(0, 0, 0, 48)
-divider.BackgroundColor3 = Color3.fromRGB(42, 42, 42)
-divider.BorderSizePixel = 0
-divider.Parent = mainFrame
+-- horizontal divider under header
+local topDivider = Instance.new("Frame")
+topDivider.Size = UDim2.new(1, 0, 0, 1)
+topDivider.Position = UDim2.new(0, 0, 0, 48)
+topDivider.BackgroundColor3 = Color3.fromRGB(42, 42, 42)
+topDivider.BorderSizePixel = 0
+topDivider.Parent = mainFrame
 
+-- vertical divider splitting left/right panels
+local vertDivider = Instance.new("Frame")
+vertDivider.Size = UDim2.new(0, 1, 1, -49)
+vertDivider.Position = UDim2.new(0, 320, 0, 49)
+vertDivider.BackgroundColor3 = Color3.fromRGB(42, 42, 42)
+vertDivider.BorderSizePixel = 0
+vertDivider.Parent = mainFrame
+
+-- ─────────────────────────────────────────────
+-- LEFT PANEL – toggle rows
+-- ─────────────────────────────────────────────
 local scrollFrame = Instance.new("ScrollingFrame")
-scrollFrame.Size = UDim2.new(1, 0, 1, -49)
+scrollFrame.Size = UDim2.new(0, 320, 1, -49)
 scrollFrame.Position = UDim2.new(0, 0, 0, 49)
 scrollFrame.BackgroundTransparency = 1
 scrollFrame.BorderSizePixel = 0
 scrollFrame.ScrollBarThickness = 0
-scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 420)
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 500)
 scrollFrame.Parent = mainFrame
 
 local listLayout = Instance.new("UIListLayout")
 listLayout.SortOrder = Enum.SortOrder.LayoutOrder
 listLayout.Parent = scrollFrame
 
+-- ─────────────────────────────────────────────
+-- RIGHT PANEL – profile / leaderboard
+-- ─────────────────────────────────────────────
+local rightPanel = Instance.new("Frame")
+rightPanel.Size = UDim2.new(0, 258, 1, -49)
+rightPanel.Position = UDim2.new(0, 322, 0, 49)
+rightPanel.BackgroundTransparency = 1
+rightPanel.BorderSizePixel = 0
+rightPanel.Parent = mainFrame
+
+-- Username label
+local nameLabel = Instance.new("TextLabel")
+nameLabel.Text = player.Name
+nameLabel.Font = Enum.Font.GothamBold
+nameLabel.TextSize = 17
+nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+nameLabel.Size = UDim2.new(1, -12, 0, 30)
+nameLabel.Position = UDim2.new(0, 6, 0, 10)
+nameLabel.BackgroundTransparency = 1
+nameLabel.TextXAlignment = Enum.TextXAlignment.Center
+nameLabel.Parent = rightPanel
+
+-- SRT HUB badge
+local tagFrame = Instance.new("Frame")
+tagFrame.Size = UDim2.new(0, 80, 0, 22)
+tagFrame.Position = UDim2.new(0.5, -40, 0, 44)
+tagFrame.BackgroundColor3 = Color3.fromRGB(26, 58, 26)
+tagFrame.BorderSizePixel = 0
+tagFrame.Parent = rightPanel
+Instance.new("UICorner", tagFrame).CornerRadius = UDim.new(0, 11)
+
+local tagLabel = Instance.new("TextLabel")
+tagLabel.Text = "SRT HUB"
+tagLabel.Font = Enum.Font.GothamBold
+tagLabel.TextSize = 10
+tagLabel.TextColor3 = Color3.fromRGB(76, 175, 80)
+tagLabel.Size = UDim2.new(1, 0, 1, 0)
+tagLabel.BackgroundTransparency = 1
+tagLabel.Parent = tagFrame
+
+-- Leaderboard section header
+local lbDiv = Instance.new("Frame")
+lbDiv.Size = UDim2.new(1, -24, 0, 1)
+lbDiv.Position = UDim2.new(0, 12, 0, 74)
+lbDiv.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+lbDiv.BorderSizePixel = 0
+lbDiv.Parent = rightPanel
+
+local lbTitle = Instance.new("TextLabel")
+lbTitle.Text = "LEADERBOARD RANKS"
+lbTitle.Font = Enum.Font.GothamBold
+lbTitle.TextSize = 9
+lbTitle.TextColor3 = Color3.fromRGB(58, 58, 58)
+lbTitle.Size = UDim2.new(1, 0, 0, 20)
+lbTitle.Position = UDim2.new(0, 0, 0, 80)
+lbTitle.BackgroundTransparency = 1
+lbTitle.TextXAlignment = Enum.TextXAlignment.Center
+lbTitle.Parent = rightPanel
+
+-- Stat cards
+local stats = {
+    {name = "Gems",        color = Color3.fromRGB(76, 175, 80),  path = "Gems"},
+    {name = "Coins",       color = Color3.fromRGB(245, 197, 66), path = "Coins"},
+    {name = "Fizz",        color = Color3.fromRGB(41, 182, 246), path = "Fizz"},
+    {name = "Egg Hatches", color = Color3.fromRGB(239, 83, 80),  path = "EggsHatched"},
+}
+
+local rankLabels = {}
+
+for i, stat in ipairs(stats) do
+    local yPos = 106 + (i - 1) * 70
+
+    local card = Instance.new("Frame")
+    card.Size = UDim2.new(1, -24, 0, 58)
+    card.Position = UDim2.new(0, 12, 0, yPos)
+    card.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    card.BorderSizePixel = 0
+    card.Parent = rightPanel
+    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 10)
+
+    local cardStroke = Instance.new("UIStroke", card)
+    cardStroke.Color = Color3.fromRGB(30, 30, 30)
+    cardStroke.Thickness = 0.5
+
+    local bar = Instance.new("Frame")
+    bar.Size = UDim2.new(0, 3, 0, 34)
+    bar.Position = UDim2.new(0, 10, 0.5, -17)
+    bar.BackgroundColor3 = stat.color
+    bar.BorderSizePixel = 0
+    bar.Parent = card
+    Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 2)
+
+    local sName = Instance.new("TextLabel")
+    sName.Text = stat.name
+    sName.Font = Enum.Font.Gotham
+    sName.TextSize = 11
+    sName.TextColor3 = Color3.fromRGB(85, 85, 85)
+    sName.Size = UDim2.new(0, 110, 0, 16)
+    sName.Position = UDim2.new(0, 22, 0, 10)
+    sName.BackgroundTransparency = 1
+    sName.TextXAlignment = Enum.TextXAlignment.Left
+    sName.Parent = card
+
+    local sVal = Instance.new("TextLabel")
+    sVal.Text = "Searching..."
+    sVal.Font = Enum.Font.GothamBold
+    sVal.TextSize = 12
+    sVal.TextColor3 = Color3.fromRGB(200, 200, 200)
+    sVal.Size = UDim2.new(0, 110, 0, 18)
+    sVal.Position = UDim2.new(0, 22, 0, 30)
+    sVal.BackgroundTransparency = 1
+    sVal.TextXAlignment = Enum.TextXAlignment.Left
+    sVal.Parent = card
+
+    local badge = Instance.new("Frame")
+    badge.Size = UDim2.new(0, 54, 0, 40)
+    badge.Position = UDim2.new(1, -64, 0.5, -20)
+    badge.BackgroundColor3 = Color3.fromRGB(11, 11, 11)
+    badge.BorderSizePixel = 0
+    badge.Parent = card
+    Instance.new("UICorner", badge).CornerRadius = UDim.new(0, 8)
+
+    local badgeStroke2 = Instance.new("UIStroke", badge)
+    badgeStroke2.Color = Color3.fromRGB(42, 42, 42)
+    badgeStroke2.Thickness = 0.5
+
+    local rankNum = Instance.new("TextLabel")
+    rankNum.Text = "#--"
+    rankNum.Font = Enum.Font.GothamBold
+    rankNum.TextSize = 14
+    rankNum.TextColor3 = stat.color
+    rankNum.Size = UDim2.new(1, 0, 0, 22)
+    rankNum.Position = UDim2.new(0, 0, 0, 4)
+    rankNum.BackgroundTransparency = 1
+    rankNum.Parent = badge
+
+    local rankLbl = Instance.new("TextLabel")
+    rankLbl.Text = "RANK"
+    rankLbl.Font = Enum.Font.GothamBold
+    rankLbl.TextSize = 8
+    rankLbl.TextColor3 = Color3.fromRGB(68, 68, 68)
+    rankLbl.Size = UDim2.new(1, 0, 0, 12)
+    rankLbl.Position = UDim2.new(0, 0, 0, 26)
+    rankLbl.BackgroundTransparency = 1
+    rankLbl.Parent = badge
+
+    rankLabels[i] = {rankNum = rankNum, sVal = sVal, path = stat.path}
+end
+
+-- Refresh footer
+local dotFrame = Instance.new("Frame")
+dotFrame.Size = UDim2.new(0, 6, 0, 6)
+dotFrame.Position = UDim2.new(0, 12, 1, -18)
+dotFrame.BackgroundColor3 = Color3.fromRGB(76, 175, 80)
+dotFrame.BorderSizePixel = 0
+dotFrame.Parent = rightPanel
+Instance.new("UICorner", dotFrame).CornerRadius = UDim.new(0, 3)
+
+local refreshLabel = Instance.new("TextLabel")
+refreshLabel.Text = "Refreshes every 30 sec"
+refreshLabel.Font = Enum.Font.Gotham
+refreshLabel.TextSize = 9
+refreshLabel.TextColor3 = Color3.fromRGB(51, 51, 51)
+refreshLabel.Size = UDim2.new(1, -30, 0, 16)
+refreshLabel.Position = UDim2.new(0, 24, 1, -20)
+refreshLabel.BackgroundTransparency = 1
+refreshLabel.Parent = rightPanel
+
+-- ─────────────────────────────────────────────
+-- HELPER FUNCTIONS
+-- ─────────────────────────────────────────────
 local function updateBadge()
     badgeLabel.Text = activeCount .. " active"
 end
@@ -155,7 +340,6 @@ local function makeToggleRow(title, desc, order, onEnable, onDisable)
     toggleBg.BackgroundColor3 = Color3.fromRGB(51, 51, 51)
     toggleBg.BorderSizePixel = 0
     toggleBg.Parent = row
-
     Instance.new("UICorner", toggleBg).CornerRadius = UDim.new(0, 13)
 
     local knob = Instance.new("Frame")
@@ -164,7 +348,6 @@ local function makeToggleRow(title, desc, order, onEnable, onDisable)
     knob.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
     knob.BorderSizePixel = 0
     knob.Parent = toggleBg
-
     Instance.new("UICorner", knob).CornerRadius = UDim.new(0, 10)
 
     local isOn = false
@@ -199,7 +382,9 @@ local function getRoot()
     return char:WaitForChild("HumanoidRootPart")
 end
 
+-- ─────────────────────────────────────────────
 -- AFK GUI
+-- ─────────────────────────────────────────────
 local afkGui = nil
 local afkStatusLabel = nil
 
@@ -217,8 +402,8 @@ local function createAFKGui()
     title.Position = UDim2.new(0.698, 0, 0.098, 0)
     title.Size = UDim2.new(0, 370, 0, 52)
     title.Font = Enum.Font.SourceSansSemibold
-    title.Text = "Thabro1"
-    title.TextColor3 = Color3.fromRGB(0, 255, 255)
+    title.Text = "SRT Hub"
+    title.TextColor3 = Color3.fromRGB(76, 175, 80)
     title.TextSize = 30
 
     local body = Instance.new("Frame")
@@ -235,7 +420,7 @@ local function createAFKGui()
     statusLbl.Size = UDim2.new(0, 370, 0, 44)
     statusLbl.Font = Enum.Font.ArialBold
     statusLbl.Text = "Status: Active"
-    statusLbl.TextColor3 = Color3.fromRGB(0, 255, 255)
+    statusLbl.TextColor3 = Color3.fromRGB(76, 175, 80)
     statusLbl.TextSize = 20
 
     local credit = Instance.new("TextLabel")
@@ -244,13 +429,16 @@ local function createAFKGui()
     credit.Position = UDim2.new(0, 0, 0.800, 0)
     credit.Size = UDim2.new(0, 370, 0, 21)
     credit.Font = Enum.Font.Arial
-    credit.Text = "Made by Thabro1"
-    credit.TextColor3 = Color3.fromRGB(0, 255, 255)
+    credit.Text = "Made by SRT Hub"
+    credit.TextColor3 = Color3.fromRGB(76, 175, 80)
     credit.TextSize = 20
 
     return gui, statusLbl
 end
 
+-- ─────────────────────────────────────────────
+-- CLAIM HELPERS
+-- ─────────────────────────────────────────────
 local function autoClickClaimButtons()
     pcall(function()
         local scrollingFrame = playerGui.MainUI.Menus.GiftsFrame.InnerFrame.ScrollingFrame
@@ -272,14 +460,14 @@ local function tryClaim(Network, index, giftType)
     autoClickClaimButtons()
 end
 
+-- ─────────────────────────────────────────────
+-- AUTO CLICK
+-- ─────────────────────────────────────────────
 local clickConnection = nil
 
 local function stopAutoClick()
     clickEnabled = false
-    if clickConnection then
-        clickConnection:Disconnect()
-        clickConnection = nil
-    end
+    if clickConnection then clickConnection:Disconnect() clickConnection = nil end
     local vp = workspace.CurrentCamera.ViewportSize
     for i = 1, 5 do
         VirtualInputManager:SendMouseButtonEvent(vp.X - 1, vp.Y - 1, 0, false, game, 0)
@@ -291,10 +479,7 @@ local function stopAutoClick()
     local char = player.Character
     if char then
         local hum = char:FindFirstChildOfClass("Humanoid")
-        if hum then
-            hum.WalkSpeed = 16
-            hum.JumpPower = 50
-        end
+        if hum then hum.WalkSpeed = 16 hum.JumpPower = 50 end
         local hrp = char:FindFirstChild("HumanoidRootPart")
         if hrp then hrp.AssemblyLinearVelocity = Vector3.zero end
     end
@@ -312,7 +497,9 @@ local function startAutoClick()
     end)
 end
 
--- Sections
+-- ─────────────────────────────────────────────
+-- TOGGLE ROWS
+-- ─────────────────────────────────────────────
 makeSection("FARM", 1)
 
 makeToggleRow("Auto Gem", "Teleports to gem spawners", 2,
@@ -338,7 +525,7 @@ makeToggleRow("Auto Gem", "Teleports to gem spawners", 2,
     function() gemEnabled = false end
 )
 
-makeToggleRow("Auto Hatch", "Presses T at Space Egg", 3,
+makeToggleRow("Auto Hatch", "Presses T at Lava Egg", 3,
     function()
         hatchEnabled = true
         local root = getRoot()
@@ -355,9 +542,12 @@ makeToggleRow("Auto Hatch", "Presses T at Space Egg", 3,
     function() hatchEnabled = false end
 )
 
-makeToggleRow("Auto Claim Rewards", "Claims gifts automatically", 4,
+-- ── AUTO CLAIM REWARDS – checks every 5 minutes ──────────────────────────────
+makeToggleRow("Auto Claim Rewards", "Claims gifts every 5 min", 4,
     function()
         claimEnabled = true
+
+        -- Listen for new claim buttons appearing in the GUI
         task.spawn(function()
             playerGui.DescendantAdded:Connect(function(obj)
                 if not claimEnabled then return end
@@ -371,9 +561,11 @@ makeToggleRow("Auto Claim Rewards", "Claims gifts automatically", 4,
                 end
             end)
         end)
+
         task.spawn(function()
             pcall(function()
-                local sf = playerGui:WaitForChild("MainUI"):WaitForChild("Menus"):WaitForChild("GiftsFrame"):WaitForChild("InnerFrame"):WaitForChild("ScrollingFrame")
+                local sf = playerGui:WaitForChild("MainUI"):WaitForChild("Menus")
+                    :WaitForChild("GiftsFrame"):WaitForChild("InnerFrame"):WaitForChild("ScrollingFrame")
                 sf.DescendantAdded:Connect(function(obj)
                     if not claimEnabled then return end
                     if obj.Name == "ClaimButton" then
@@ -383,50 +575,92 @@ makeToggleRow("Auto Claim Rewards", "Claims gifts automatically", 4,
                 end)
             end)
         end)
+
+        -- Main claim loop — runs once immediately, then every 5 minutes (300 s)
         local Network = require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Network"))
         local GiftsData = require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Data"):WaitForChild("GiftsData"))
-        task.wait(3)
-        local claiming = {}
-        while claimEnabled do
-            task.wait(1)
+
+        local CLAIM_INTERVAL = 300  -- 5 minutes in seconds
+
+        local function doClaimPass()
             local data
             local ok = pcall(function() data = Network:InvokeServer("GetGiftData") end)
-            if ok and data then
-                local startTime = tonumber(data.t0) or os.time()
-                for index, gift in ipairs(GiftsData) do
-                    if not claimEnabled then break end
-                    if gift.Type ~= "Pet" and not claiming[index] then
-                        local claimed = data.GiftsClaimed and (
-                            data.GiftsClaimed[index] == true or
-                            data.GiftsClaimed[tostring(index)] == true
-                        )
-                        if not claimed then
-                            local remaining = gift.Time - (os.time() - startTime)
-                            if remaining <= 0 then
-                                claiming[index] = true
-                                pcall(function() tryClaim(Network, index, gift.Type) end)
-                                task.wait(0.2)
-                                claiming[index] = nil
-                            end
+            if not (ok and data) then return end
+
+            local startTime = tonumber(data.t0) or os.time()
+            local claiming = {}
+
+            for index, gift in ipairs(GiftsData) do
+                if not claimEnabled then break end
+                if gift.Type ~= "Pet" and not claiming[index] then
+                    local claimed = data.GiftsClaimed and (
+                        data.GiftsClaimed[index] == true or
+                        data.GiftsClaimed[tostring(index)] == true
+                    )
+                    if not claimed then
+                        local remaining = gift.Time - (os.time() - startTime)
+                        if remaining <= 0 then
+                            claiming[index] = true
+                            pcall(function() tryClaim(Network, index, gift.Type) end)
+                            task.wait(0.2)
+                            claiming[index] = nil
                         end
                     end
                 end
+            end
+        end
+
+        -- Initial short delay then first pass
+        task.wait(3)
+        doClaimPass()
+
+        -- Repeat every 5 minutes
+        while claimEnabled do
+            local elapsed = 0
+            while claimEnabled and elapsed < CLAIM_INTERVAL do
+                task.wait(1)
+                elapsed += 1
+            end
+            if claimEnabled then
+                doClaimPass()
             end
         end
     end,
     function() claimEnabled = false end
 )
 
-makeSection("ACTIONS", 5)
+makeToggleRow("Auto Sell", "Teleports to Lava sell zone", 5,
+    function()
+        sellEnabled = true
+        while sellEnabled do
+            task.wait(2)
+            local ok, target = pcall(function()
+                return workspace:WaitForChild("Touches"):WaitForChild("SellZones"):WaitForChild("Lava")
+            end)
+            if ok and target then
+                local char = player.Character
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                local hum = char and char:FindFirstChild("Humanoid")
+                if hrp and hum then
+                    hrp.CFrame = target.CFrame + Vector3.new(0, 5, 0)
+                    hum:ChangeState(Enum.HumanoidStateType.Jumping)
+                end
+            end
+        end
+    end,
+    function() sellEnabled = false end
+)
 
-makeToggleRow("Auto Click", "Fast clicks bottom-right", 6,
+makeSection("ACTIONS", 6)
+
+makeToggleRow("Auto Click", "Fast clicks bottom-right", 7,
     function() startAutoClick() end,
     function() stopAutoClick() end
 )
 
-makeSection("UTILITY", 7)
+makeSection("UTILITY", 8)
 
-makeToggleRow("AFK Bypass", "Prevents idle kick", 8,
+makeToggleRow("AFK Bypass", "Prevents idle kick", 9,
     function()
         afkEnabled = true
         afkGui, afkStatusLabel = createAFKGui()
@@ -451,6 +685,9 @@ makeToggleRow("AFK Bypass", "Prevents idle kick", 8,
     end
 )
 
+-- ─────────────────────────────────────────────
+-- HOTKEYS
+-- ─────────────────────────────────────────────
 UserInputService.InputBegan:Connect(function(input, gp)
     if gp then return end
     if input.KeyCode == Enum.KeyCode.G then
@@ -461,186 +698,17 @@ UserInputService.InputBegan:Connect(function(input, gp)
         if clickEnabled then stopAutoClick() else startAutoClick() end
         print("Auto Click:", clickEnabled and "ON" or "OFF")
     end
+    if input.KeyCode == Enum.KeyCode.M then
+        sellEnabled = not sellEnabled
+        print("Auto Sell:", sellEnabled and "ON" or "OFF")
+    end
 end)
 
--- Profile Panel
+-- ─────────────────────────────────────────────
+-- LEADERBOARD REFRESH (right panel)
+-- ─────────────────────────────────────────────
 task.spawn(function()
-    task.wait(5)
-
-    local profileGui = Instance.new("ScreenGui")
-    profileGui.Name = "SRTProfile"
-    profileGui.ResetOnSpawn = false
-    profileGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    profileGui.Parent = game.CoreGui
-
-    local profileFrame = Instance.new("Frame")
-    profileFrame.Size = UDim2.new(0, 240, 0, 370)
-    profileFrame.Position = UDim2.new(1, -260, 0, 20)
-    profileFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-    profileFrame.BorderSizePixel = 0
-    profileFrame.Active = true
-    profileFrame.Draggable = true
-    profileFrame.Parent = profileGui
-
-    Instance.new("UICorner", profileFrame).CornerRadius = UDim.new(0, 14)
-    local stroke = Instance.new("UIStroke", profileFrame)
-    stroke.Color = Color3.fromRGB(30, 30, 30)
-    stroke.Thickness = 0.5
-
-    local nameLabel = Instance.new("TextLabel")
-    nameLabel.Text = "sosjxnxnjd"
-    nameLabel.Font = Enum.Font.GothamBold
-    nameLabel.TextSize = 17
-    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    nameLabel.Size = UDim2.new(1, 0, 0, 30)
-    nameLabel.Position = UDim2.new(0, 0, 0, 14)
-    nameLabel.BackgroundTransparency = 1
-    nameLabel.TextXAlignment = Enum.TextXAlignment.Center
-    nameLabel.Parent = profileFrame
-
-    local tagFrame = Instance.new("Frame")
-    tagFrame.Size = UDim2.new(0, 80, 0, 20)
-    tagFrame.Position = UDim2.new(0.5, -40, 0, 48)
-    tagFrame.BackgroundColor3 = Color3.fromRGB(26, 58, 26)
-    tagFrame.BorderSizePixel = 0
-    tagFrame.Parent = profileFrame
-    Instance.new("UICorner", tagFrame).CornerRadius = UDim.new(0, 10)
-
-    local tagLabel = Instance.new("TextLabel")
-    tagLabel.Text = "SRT HUB"
-    tagLabel.Font = Enum.Font.GothamBold
-    tagLabel.TextSize = 10
-    tagLabel.TextColor3 = Color3.fromRGB(76, 175, 80)
-    tagLabel.Size = UDim2.new(1, 0, 1, 0)
-    tagLabel.BackgroundTransparency = 1
-    tagLabel.Parent = tagFrame
-
-    local div = Instance.new("Frame")
-    div.Size = UDim2.new(1, -24, 0, 1)
-    div.Position = UDim2.new(0, 12, 0, 78)
-    div.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    div.BorderSizePixel = 0
-    div.Parent = profileFrame
-
-    local lbTitle = Instance.new("TextLabel")
-    lbTitle.Text = "LEADERBOARD RANKS"
-    lbTitle.Font = Enum.Font.GothamBold
-    lbTitle.TextSize = 9
-    lbTitle.TextColor3 = Color3.fromRGB(58, 58, 58)
-    lbTitle.Size = UDim2.new(1, 0, 0, 20)
-    lbTitle.Position = UDim2.new(0, 0, 0, 86)
-    lbTitle.BackgroundTransparency = 1
-    lbTitle.TextXAlignment = Enum.TextXAlignment.Center
-    lbTitle.Parent = profileFrame
-
-    local stats = {
-        {name = "Gems",        color = Color3.fromRGB(76, 175, 80),  path = "Gems"},
-        {name = "Coins",       color = Color3.fromRGB(245, 197, 66), path = "Coins"},
-        {name = "Fizz",        color = Color3.fromRGB(41, 182, 246), path = "Fizz"},
-        {name = "Egg Hatches", color = Color3.fromRGB(239, 83, 80),  path = "EggsHatched"},
-    }
-
-    local rankLabels = {}
-
-    for i, stat in ipairs(stats) do
-        local yPos = 114 + (i - 1) * 64
-
-        local card = Instance.new("Frame")
-        card.Size = UDim2.new(1, -24, 0, 56)
-        card.Position = UDim2.new(0, 12, 0, yPos)
-        card.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-        card.BorderSizePixel = 0
-        card.Parent = profileFrame
-        Instance.new("UICorner", card).CornerRadius = UDim.new(0, 10)
-
-        local cardStroke = Instance.new("UIStroke", card)
-        cardStroke.Color = Color3.fromRGB(30, 30, 30)
-        cardStroke.Thickness = 0.5
-
-        local bar = Instance.new("Frame")
-        bar.Size = UDim2.new(0, 3, 0, 34)
-        bar.Position = UDim2.new(0, 10, 0.5, -17)
-        bar.BackgroundColor3 = stat.color
-        bar.BorderSizePixel = 0
-        bar.Parent = card
-        Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 2)
-
-        local sName = Instance.new("TextLabel")
-        sName.Text = stat.name
-        sName.Font = Enum.Font.Gotham
-        sName.TextSize = 11
-        sName.TextColor3 = Color3.fromRGB(85, 85, 85)
-        sName.Size = UDim2.new(0, 110, 0, 16)
-        sName.Position = UDim2.new(0, 22, 0, 10)
-        sName.BackgroundTransparency = 1
-        sName.TextXAlignment = Enum.TextXAlignment.Left
-        sName.Parent = card
-
-        local sVal = Instance.new("TextLabel")
-        sVal.Text = "Searching..."
-        sVal.Font = Enum.Font.GothamBold
-        sVal.TextSize = 12
-        sVal.TextColor3 = Color3.fromRGB(200, 200, 200)
-        sVal.Size = UDim2.new(0, 110, 0, 18)
-        sVal.Position = UDim2.new(0, 22, 0, 28)
-        sVal.BackgroundTransparency = 1
-        sVal.TextXAlignment = Enum.TextXAlignment.Left
-        sVal.Parent = card
-
-        local badge = Instance.new("Frame")
-        badge.Size = UDim2.new(0, 54, 0, 40)
-        badge.Position = UDim2.new(1, -64, 0.5, -20)
-        badge.BackgroundColor3 = Color3.fromRGB(11, 11, 11)
-        badge.BorderSizePixel = 0
-        badge.Parent = card
-        Instance.new("UICorner", badge).CornerRadius = UDim.new(0, 8)
-
-        local badgeStroke = Instance.new("UIStroke", badge)
-        badgeStroke.Color = Color3.fromRGB(42, 42, 42)
-        badgeStroke.Thickness = 0.5
-
-        local rankNum = Instance.new("TextLabel")
-        rankNum.Text = "#--"
-        rankNum.Font = Enum.Font.GothamBold
-        rankNum.TextSize = 14
-        rankNum.TextColor3 = stat.color
-        rankNum.Size = UDim2.new(1, 0, 0, 22)
-        rankNum.Position = UDim2.new(0, 0, 0, 4)
-        rankNum.BackgroundTransparency = 1
-        rankNum.Parent = badge
-
-        local rankLbl = Instance.new("TextLabel")
-        rankLbl.Text = "RANK"
-        rankLbl.Font = Enum.Font.GothamBold
-        rankLbl.TextSize = 8
-        rankLbl.TextColor3 = Color3.fromRGB(68, 68, 68)
-        rankLbl.Size = UDim2.new(1, 0, 0, 12)
-        rankLbl.Position = UDim2.new(0, 0, 0, 26)
-        rankLbl.BackgroundTransparency = 1
-        rankLbl.Parent = badge
-
-        rankLabels[i] = {rankNum = rankNum, sVal = sVal, path = stat.path}
-    end
-
-    local dotFrame = Instance.new("Frame")
-    dotFrame.Size = UDim2.new(0, 6, 0, 6)
-    dotFrame.Position = UDim2.new(0.5, -50, 1, -18)
-    dotFrame.BackgroundColor3 = Color3.fromRGB(76, 175, 80)
-    dotFrame.BorderSizePixel = 0
-    dotFrame.Parent = profileFrame
-    Instance.new("UICorner", dotFrame).CornerRadius = UDim.new(0, 3)
-
-    local refreshLabel = Instance.new("TextLabel")
-    refreshLabel.Text = "Refreshes every 30 sec"
-    refreshLabel.Font = Enum.Font.Gotham
-    refreshLabel.TextSize = 9
-    refreshLabel.TextColor3 = Color3.fromRGB(51, 51, 51)
-    refreshLabel.Size = UDim2.new(0, 160, 0, 16)
-    refreshLabel.Position = UDim2.new(0.5, -72, 1, -20)
-    refreshLabel.BackgroundTransparency = 1
-    refreshLabel.Parent = profileFrame
-
-    local TARGET = string.lower("sosjxnxnjd")
+    local TARGET = string.lower(player.Name)
 
     local function getRank(lbPath)
         local ok, lb = pcall(function()
@@ -648,24 +716,17 @@ task.spawn(function()
         end)
         if not ok or not lb then return "#??", "Error" end
 
-        -- Search all descendants for Username labels
         for _, desc in ipairs(lb:GetDescendants()) do
             if desc.Name == "Username" and (desc:IsA("TextLabel") or desc:IsA("TextButton")) then
-                -- Clean the text: remove spaces, @, and lowercase
                 local cleanText = string.lower(desc.Text:gsub("[%s@]", ""))
                 if cleanText == TARGET then
-                    -- Found player! Go up to the rank entry (desc.Parent = Rank_N)
                     local rankEntry = desc.Parent
-                    -- Get rank number from Rank > Label
                     local rankFrame = rankEntry:FindFirstChild("Rank")
-                    local rankNum = rankFrame and rankFrame:FindFirstChild("Label")
-                    -- Get amount
+                    local rankNumObj = rankFrame and rankFrame:FindFirstChild("Label")
                     local amountObj = rankEntry:FindFirstChild("Number")
                     local amount = amountObj and amountObj.Text or ""
-                    local num = rankNum and rankNum.Text or nil
-                    if num then
-                        return "#" .. num, amount
-                    end
+                    local num = rankNumObj and rankNumObj.Text or nil
+                    if num then return "#" .. num, amount end
                 end
             end
         end
