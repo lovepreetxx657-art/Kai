@@ -41,9 +41,7 @@ header.BackgroundColor3 = Color3.fromRGB(17, 17, 17)
 header.BorderSizePixel = 0
 header.Parent = mainFrame
 
-local headerCorner = Instance.new("UICorner")
-headerCorner.CornerRadius = UDim.new(0, 14)
-headerCorner.Parent = header
+Instance.new("UICorner", header).CornerRadius = UDim.new(0, 14)
 
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Text = "SRT Hub"
@@ -63,9 +61,7 @@ badgeFrame.BackgroundColor3 = Color3.fromRGB(31, 61, 31)
 badgeFrame.BorderSizePixel = 0
 badgeFrame.Parent = header
 
-local badgeCorner = Instance.new("UICorner")
-badgeCorner.CornerRadius = UDim.new(0, 13)
-badgeCorner.Parent = badgeFrame
+Instance.new("UICorner", badgeFrame).CornerRadius = UDim.new(0, 13)
 
 local badgeLabel = Instance.new("TextLabel")
 badgeLabel.Text = "0 active"
@@ -160,9 +156,7 @@ local function makeToggleRow(title, desc, order, onEnable, onDisable)
     toggleBg.BorderSizePixel = 0
     toggleBg.Parent = row
 
-    local toggleCorner = Instance.new("UICorner")
-    toggleCorner.CornerRadius = UDim.new(0, 13)
-    toggleCorner.Parent = toggleBg
+    Instance.new("UICorner", toggleBg).CornerRadius = UDim.new(0, 13)
 
     local knob = Instance.new("Frame")
     knob.Size = UDim2.new(0, 20, 0, 20)
@@ -171,9 +165,7 @@ local function makeToggleRow(title, desc, order, onEnable, onDisable)
     knob.BorderSizePixel = 0
     knob.Parent = toggleBg
 
-    local knobCorner = Instance.new("UICorner")
-    knobCorner.CornerRadius = UDim.new(0, 10)
-    knobCorner.Parent = knob
+    Instance.new("UICorner", knob).CornerRadius = UDim.new(0, 10)
 
     local isOn = false
 
@@ -202,7 +194,6 @@ local function makeToggleRow(title, desc, order, onEnable, onDisable)
     end)
 end
 
--- Helpers
 local function getRoot()
     local char = player.Character or player.CharacterAdded:Wait()
     return char:WaitForChild("HumanoidRootPart")
@@ -260,23 +251,18 @@ local function createAFKGui()
     return gui, statusLbl
 end
 
--- Auto Claim helpers
 local function autoClickClaimButtons()
     pcall(function()
         local scrollingFrame = playerGui.MainUI.Menus.GiftsFrame.InnerFrame.ScrollingFrame
         for _, child in ipairs(scrollingFrame:GetChildren()) do
             local claimBtn = child:FindFirstChild("GiftInnerTemp") and child.GiftInnerTemp:FindFirstChild("ClaimButton")
-            if claimBtn then
-                claimBtn.MouseButton1Click:Fire()
-            end
+            if claimBtn then claimBtn.MouseButton1Click:Fire() end
         end
     end)
 end
 
 local function tryClaim(Network, index, giftType)
-    pcall(function()
-        Network:InvokeServer("ClaimGift", index)
-    end)
+    pcall(function() Network:InvokeServer("ClaimGift", index) end)
     if giftType == "Boost" then
         pcall(function() Network:InvokeServer("ClaimBoost", index) end)
         pcall(function() Network:InvokeServer("ClaimReward", index) end)
@@ -286,13 +272,49 @@ local function tryClaim(Network, index, giftType)
     autoClickClaimButtons()
 end
 
--- RenderStepped connection reference for auto click
 local clickConnection = nil
+
+local function stopAutoClick()
+    clickEnabled = false
+    if clickConnection then
+        clickConnection:Disconnect()
+        clickConnection = nil
+    end
+    local vp = workspace.CurrentCamera.ViewportSize
+    for i = 1, 5 do
+        VirtualInputManager:SendMouseButtonEvent(vp.X - 1, vp.Y - 1, 0, false, game, 0)
+    end
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.W, false, game)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.A, false, game)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.S, false, game)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.D, false, game)
+    local char = player.Character
+    if char then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum.WalkSpeed = 16
+            hum.JumpPower = 50
+        end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if hrp then hrp.AssemblyLinearVelocity = Vector3.zero end
+    end
+end
+
+local function startAutoClick()
+    if clickConnection then clickConnection:Disconnect() clickConnection = nil end
+    clickEnabled = true
+    local Camera = workspace.CurrentCamera
+    clickConnection = RunService.Heartbeat:Connect(function()
+        if not clickEnabled then return end
+        local vp = Camera.ViewportSize
+        VirtualInputManager:SendMouseButtonEvent(vp.X - 1, vp.Y - 1, 0, true, game, 0)
+        VirtualInputManager:SendMouseButtonEvent(vp.X - 1, vp.Y - 1, 0, false, game, 0)
+    end)
+end
 
 -- Sections
 makeSection("FARM", 1)
 
--- Auto Gem
 makeToggleRow("Auto Gem", "Teleports to gem spawners", 2,
     function()
         gemEnabled = true
@@ -313,17 +335,14 @@ makeToggleRow("Auto Gem", "Teleports to gem spawners", 2,
             task.wait(0.1)
         end
     end,
-    function()
-        gemEnabled = false
-    end
+    function() gemEnabled = false end
 )
 
--- Auto Hatch
 makeToggleRow("Auto Hatch", "Presses T at Space Egg", 3,
     function()
         hatchEnabled = true
         local root = getRoot()
-        local egg = workspace:WaitForChild("Eggs"):WaitForChild("Space Egg")
+        local egg = workspace:WaitForChild("Eggs"):WaitForChild("Lava Egg")
         root.CFrame = egg:IsA("Model") and egg:GetPivot() or CFrame.new(egg.Position)
         task.wait(1)
         while hatchEnabled do
@@ -333,16 +352,12 @@ makeToggleRow("Auto Hatch", "Presses T at Space Egg", 3,
             task.wait(3)
         end
     end,
-    function()
-        hatchEnabled = false
-    end
+    function() hatchEnabled = false end
 )
 
--- Auto Claim Rewards
 makeToggleRow("Auto Claim Rewards", "Claims gifts automatically", 4,
     function()
         claimEnabled = true
-        -- Watcher for any claim button appearing
         task.spawn(function()
             playerGui.DescendantAdded:Connect(function(obj)
                 if not claimEnabled then return end
@@ -356,11 +371,10 @@ makeToggleRow("Auto Claim Rewards", "Claims gifts automatically", 4,
                 end
             end)
         end)
-        -- ScrollingFrame watcher
         task.spawn(function()
             pcall(function()
-                local scrollingFrame = playerGui:WaitForChild("MainUI"):WaitForChild("Menus"):WaitForChild("GiftsFrame"):WaitForChild("InnerFrame"):WaitForChild("ScrollingFrame")
-                scrollingFrame.DescendantAdded:Connect(function(obj)
+                local sf = playerGui:WaitForChild("MainUI"):WaitForChild("Menus"):WaitForChild("GiftsFrame"):WaitForChild("InnerFrame"):WaitForChild("ScrollingFrame")
+                sf.DescendantAdded:Connect(function(obj)
                     if not claimEnabled then return end
                     if obj.Name == "ClaimButton" then
                         task.wait(0.1)
@@ -369,7 +383,6 @@ makeToggleRow("Auto Claim Rewards", "Claims gifts automatically", 4,
                 end)
             end)
         end)
-        -- Main claim loop
         local Network = require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Network"))
         local GiftsData = require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Data"):WaitForChild("GiftsData"))
         task.wait(3)
@@ -377,10 +390,8 @@ makeToggleRow("Auto Claim Rewards", "Claims gifts automatically", 4,
         while claimEnabled do
             task.wait(1)
             local data
-            local success = pcall(function()
-                data = Network:InvokeServer("GetGiftData")
-            end)
-            if success and data then
+            local ok = pcall(function() data = Network:InvokeServer("GetGiftData") end)
+            if ok and data then
                 local startTime = tonumber(data.t0) or os.time()
                 for index, gift in ipairs(GiftsData) do
                     if not claimEnabled then break end
@@ -393,9 +404,7 @@ makeToggleRow("Auto Claim Rewards", "Claims gifts automatically", 4,
                             local remaining = gift.Time - (os.time() - startTime)
                             if remaining <= 0 then
                                 claiming[index] = true
-                                pcall(function()
-                                    tryClaim(Network, index, gift.Type)
-                                end)
+                                pcall(function() tryClaim(Network, index, gift.Type) end)
                                 task.wait(0.2)
                                 claiming[index] = nil
                             end
@@ -405,44 +414,18 @@ makeToggleRow("Auto Claim Rewards", "Claims gifts automatically", 4,
             end
         end
     end,
-    function()
-        claimEnabled = false
-    end
+    function() claimEnabled = false end
 )
 
 makeSection("ACTIONS", 5)
 
--- Auto Click
-makeToggleRow("Auto Click", "400 CPS bottom-right", 6,
-    function()
-        clickEnabled = true
-        local Camera = workspace.CurrentCamera
-        local clicksPerSecond = 400
-        clickConnection = RunService.RenderStepped:Connect(function(deltaTime)
-            if clickEnabled then
-                local viewportSize = Camera.ViewportSize
-                local x = viewportSize.X - 10
-                local y = viewportSize.Y - 10
-                local clicksThisFrame = math.floor(clicksPerSecond * deltaTime)
-                for i = 1, clicksThisFrame do
-                    VirtualInputManager:SendMouseButtonEvent(x, y, 0, true, game, 0)
-                    VirtualInputManager:SendMouseButtonEvent(x, y, 0, false, game, 0)
-                end
-            end
-        end)
-    end,
-    function()
-        clickEnabled = false
-        if clickConnection then
-            clickConnection:Disconnect()
-            clickConnection = nil
-        end
-    end
+makeToggleRow("Auto Click", "Fast clicks bottom-right", 6,
+    function() startAutoClick() end,
+    function() stopAutoClick() end
 )
 
 makeSection("UTILITY", 7)
 
--- AFK Bypass
 makeToggleRow("AFK Bypass", "Prevents idle kick", 8,
     function()
         afkEnabled = true
@@ -454,9 +437,7 @@ makeToggleRow("AFK Bypass", "Prevents idle kick", 8,
             if afkStatusLabel and afkStatusLabel.Parent then
                 afkStatusLabel.Text = "Roblox tried to kick you but we didn't let them :D"
                 task.wait(2)
-                if afkEnabled then
-                    afkStatusLabel.Text = "Status: Active"
-                end
+                if afkEnabled then afkStatusLabel.Text = "Status: Active" end
             end
         end)
     end,
@@ -470,11 +451,242 @@ makeToggleRow("AFK Bypass", "Prevents idle kick", 8,
     end
 )
 
--- G key shortcut for gem
 UserInputService.InputBegan:Connect(function(input, gp)
     if gp then return end
     if input.KeyCode == Enum.KeyCode.G then
         gemEnabled = not gemEnabled
         print("Gem Farm:", gemEnabled and "ON" or "OFF")
+    end
+    if input.KeyCode == Enum.KeyCode.L then
+        if clickEnabled then stopAutoClick() else startAutoClick() end
+        print("Auto Click:", clickEnabled and "ON" or "OFF")
+    end
+end)
+
+-- Profile Panel
+task.spawn(function()
+    task.wait(5)
+
+    local profileGui = Instance.new("ScreenGui")
+    profileGui.Name = "SRTProfile"
+    profileGui.ResetOnSpawn = false
+    profileGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    profileGui.Parent = game.CoreGui
+
+    local profileFrame = Instance.new("Frame")
+    profileFrame.Size = UDim2.new(0, 240, 0, 370)
+    profileFrame.Position = UDim2.new(1, -260, 0, 20)
+    profileFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    profileFrame.BorderSizePixel = 0
+    profileFrame.Active = true
+    profileFrame.Draggable = true
+    profileFrame.Parent = profileGui
+
+    Instance.new("UICorner", profileFrame).CornerRadius = UDim.new(0, 14)
+    local stroke = Instance.new("UIStroke", profileFrame)
+    stroke.Color = Color3.fromRGB(30, 30, 30)
+    stroke.Thickness = 0.5
+
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Text = "sosjxnxnjd"
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.TextSize = 17
+    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nameLabel.Size = UDim2.new(1, 0, 0, 30)
+    nameLabel.Position = UDim2.new(0, 0, 0, 14)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.TextXAlignment = Enum.TextXAlignment.Center
+    nameLabel.Parent = profileFrame
+
+    local tagFrame = Instance.new("Frame")
+    tagFrame.Size = UDim2.new(0, 80, 0, 20)
+    tagFrame.Position = UDim2.new(0.5, -40, 0, 48)
+    tagFrame.BackgroundColor3 = Color3.fromRGB(26, 58, 26)
+    tagFrame.BorderSizePixel = 0
+    tagFrame.Parent = profileFrame
+    Instance.new("UICorner", tagFrame).CornerRadius = UDim.new(0, 10)
+
+    local tagLabel = Instance.new("TextLabel")
+    tagLabel.Text = "SRT HUB"
+    tagLabel.Font = Enum.Font.GothamBold
+    tagLabel.TextSize = 10
+    tagLabel.TextColor3 = Color3.fromRGB(76, 175, 80)
+    tagLabel.Size = UDim2.new(1, 0, 1, 0)
+    tagLabel.BackgroundTransparency = 1
+    tagLabel.Parent = tagFrame
+
+    local div = Instance.new("Frame")
+    div.Size = UDim2.new(1, -24, 0, 1)
+    div.Position = UDim2.new(0, 12, 0, 78)
+    div.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    div.BorderSizePixel = 0
+    div.Parent = profileFrame
+
+    local lbTitle = Instance.new("TextLabel")
+    lbTitle.Text = "LEADERBOARD RANKS"
+    lbTitle.Font = Enum.Font.GothamBold
+    lbTitle.TextSize = 9
+    lbTitle.TextColor3 = Color3.fromRGB(58, 58, 58)
+    lbTitle.Size = UDim2.new(1, 0, 0, 20)
+    lbTitle.Position = UDim2.new(0, 0, 0, 86)
+    lbTitle.BackgroundTransparency = 1
+    lbTitle.TextXAlignment = Enum.TextXAlignment.Center
+    lbTitle.Parent = profileFrame
+
+    local stats = {
+        {name = "Gems",        color = Color3.fromRGB(76, 175, 80),  path = "Gems"},
+        {name = "Coins",       color = Color3.fromRGB(245, 197, 66), path = "Coins"},
+        {name = "Fizz",        color = Color3.fromRGB(41, 182, 246), path = "Fizz"},
+        {name = "Egg Hatches", color = Color3.fromRGB(239, 83, 80),  path = "EggsHatched"},
+    }
+
+    local rankLabels = {}
+
+    for i, stat in ipairs(stats) do
+        local yPos = 114 + (i - 1) * 64
+
+        local card = Instance.new("Frame")
+        card.Size = UDim2.new(1, -24, 0, 56)
+        card.Position = UDim2.new(0, 12, 0, yPos)
+        card.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+        card.BorderSizePixel = 0
+        card.Parent = profileFrame
+        Instance.new("UICorner", card).CornerRadius = UDim.new(0, 10)
+
+        local cardStroke = Instance.new("UIStroke", card)
+        cardStroke.Color = Color3.fromRGB(30, 30, 30)
+        cardStroke.Thickness = 0.5
+
+        local bar = Instance.new("Frame")
+        bar.Size = UDim2.new(0, 3, 0, 34)
+        bar.Position = UDim2.new(0, 10, 0.5, -17)
+        bar.BackgroundColor3 = stat.color
+        bar.BorderSizePixel = 0
+        bar.Parent = card
+        Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 2)
+
+        local sName = Instance.new("TextLabel")
+        sName.Text = stat.name
+        sName.Font = Enum.Font.Gotham
+        sName.TextSize = 11
+        sName.TextColor3 = Color3.fromRGB(85, 85, 85)
+        sName.Size = UDim2.new(0, 110, 0, 16)
+        sName.Position = UDim2.new(0, 22, 0, 10)
+        sName.BackgroundTransparency = 1
+        sName.TextXAlignment = Enum.TextXAlignment.Left
+        sName.Parent = card
+
+        local sVal = Instance.new("TextLabel")
+        sVal.Text = "Searching..."
+        sVal.Font = Enum.Font.GothamBold
+        sVal.TextSize = 12
+        sVal.TextColor3 = Color3.fromRGB(200, 200, 200)
+        sVal.Size = UDim2.new(0, 110, 0, 18)
+        sVal.Position = UDim2.new(0, 22, 0, 28)
+        sVal.BackgroundTransparency = 1
+        sVal.TextXAlignment = Enum.TextXAlignment.Left
+        sVal.Parent = card
+
+        local badge = Instance.new("Frame")
+        badge.Size = UDim2.new(0, 54, 0, 40)
+        badge.Position = UDim2.new(1, -64, 0.5, -20)
+        badge.BackgroundColor3 = Color3.fromRGB(11, 11, 11)
+        badge.BorderSizePixel = 0
+        badge.Parent = card
+        Instance.new("UICorner", badge).CornerRadius = UDim.new(0, 8)
+
+        local badgeStroke = Instance.new("UIStroke", badge)
+        badgeStroke.Color = Color3.fromRGB(42, 42, 42)
+        badgeStroke.Thickness = 0.5
+
+        local rankNum = Instance.new("TextLabel")
+        rankNum.Text = "#--"
+        rankNum.Font = Enum.Font.GothamBold
+        rankNum.TextSize = 14
+        rankNum.TextColor3 = stat.color
+        rankNum.Size = UDim2.new(1, 0, 0, 22)
+        rankNum.Position = UDim2.new(0, 0, 0, 4)
+        rankNum.BackgroundTransparency = 1
+        rankNum.Parent = badge
+
+        local rankLbl = Instance.new("TextLabel")
+        rankLbl.Text = "RANK"
+        rankLbl.Font = Enum.Font.GothamBold
+        rankLbl.TextSize = 8
+        rankLbl.TextColor3 = Color3.fromRGB(68, 68, 68)
+        rankLbl.Size = UDim2.new(1, 0, 0, 12)
+        rankLbl.Position = UDim2.new(0, 0, 0, 26)
+        rankLbl.BackgroundTransparency = 1
+        rankLbl.Parent = badge
+
+        rankLabels[i] = {rankNum = rankNum, sVal = sVal, path = stat.path}
+    end
+
+    local dotFrame = Instance.new("Frame")
+    dotFrame.Size = UDim2.new(0, 6, 0, 6)
+    dotFrame.Position = UDim2.new(0.5, -50, 1, -18)
+    dotFrame.BackgroundColor3 = Color3.fromRGB(76, 175, 80)
+    dotFrame.BorderSizePixel = 0
+    dotFrame.Parent = profileFrame
+    Instance.new("UICorner", dotFrame).CornerRadius = UDim.new(0, 3)
+
+    local refreshLabel = Instance.new("TextLabel")
+    refreshLabel.Text = "Refreshes every 30 sec"
+    refreshLabel.Font = Enum.Font.Gotham
+    refreshLabel.TextSize = 9
+    refreshLabel.TextColor3 = Color3.fromRGB(51, 51, 51)
+    refreshLabel.Size = UDim2.new(0, 160, 0, 16)
+    refreshLabel.Position = UDim2.new(0.5, -72, 1, -20)
+    refreshLabel.BackgroundTransparency = 1
+    refreshLabel.Parent = profileFrame
+
+    local TARGET = string.lower("sosjxnxnjd")
+
+    local function getRank(lbPath)
+        local ok, lb = pcall(function()
+            return workspace:WaitForChild("Leaderboards", 5):WaitForChild(lbPath, 5)
+        end)
+        if not ok or not lb then return "#??", "Error" end
+
+        -- Search all descendants for Username labels
+        for _, desc in ipairs(lb:GetDescendants()) do
+            if desc.Name == "Username" and (desc:IsA("TextLabel") or desc:IsA("TextButton")) then
+                -- Clean the text: remove spaces, @, and lowercase
+                local cleanText = string.lower(desc.Text:gsub("[%s@]", ""))
+                if cleanText == TARGET then
+                    -- Found player! Go up to the rank entry (desc.Parent = Rank_N)
+                    local rankEntry = desc.Parent
+                    -- Get rank number from Rank > Label
+                    local rankFrame = rankEntry:FindFirstChild("Rank")
+                    local rankNum = rankFrame and rankFrame:FindFirstChild("Label")
+                    -- Get amount
+                    local amountObj = rankEntry:FindFirstChild("Number")
+                    local amount = amountObj and amountObj.Text or ""
+                    local num = rankNum and rankNum.Text or nil
+                    if num then
+                        return "#" .. num, amount
+                    end
+                end
+            end
+        end
+        return "#??", "Not ranked"
+    end
+
+    local function refreshAll()
+        for _, entry in ipairs(rankLabels) do
+            task.spawn(function()
+                entry.sVal.Text = "Searching..."
+                entry.rankNum.Text = "#--"
+                local rank, amount = getRank(entry.path)
+                entry.rankNum.Text = rank
+                entry.sVal.Text = rank ~= "#??" and amount or "Not ranked"
+            end)
+        end
+    end
+
+    refreshAll()
+    while true do
+        task.wait(30)
+        refreshAll()
     end
 end)
