@@ -1,0 +1,205 @@
+-- LocalScript inside StarterPlayerScripts
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- REMOTES
+local clickEvent = ReplicatedStorage
+	:WaitForChild("Events")
+	:WaitForChild("Click")
+
+local rebirthEvent = ReplicatedStorage
+	:WaitForChild("Events")
+	:WaitForChild("Rebirth")
+
+local masteryFunction = ReplicatedStorage
+	:WaitForChild("Functions")
+	:WaitForChild("IncreaseMastery")
+
+local hatchFunction = ReplicatedStorage
+	:WaitForChild("Functions")
+	:WaitForChild("Hatch")
+
+-- STATES
+local autoClickEnabled = false
+local autoRebirthEnabled = false
+local autoMasteryEnabled = false
+local autoHatchEnabled = false
+
+local clickCount = 0
+local clickTimer = 0
+
+-- GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AutoGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+-- TAB
+local tab = Instance.new("TextButton")
+tab.Size = UDim2.new(0,22,0,60)
+tab.Position = UDim2.new(1,-22,0,20)
+tab.BackgroundColor3 = Color3.fromRGB(20,20,35)
+tab.BorderSizePixel = 0
+tab.Text = "<"
+tab.TextColor3 = Color3.fromRGB(180,180,180)
+tab.Font = Enum.Font.GothamBold
+tab.TextSize = 12
+tab.Parent = screenGui
+
+Instance.new("UICorner", tab).CornerRadius = UDim.new(0,6)
+
+-- PANEL
+local panel = Instance.new("Frame")
+panel.Size = UDim2.new(0,190,0,350)
+panel.Position = UDim2.new(1,-212,0,20)
+panel.BackgroundColor3 = Color3.fromRGB(14,14,26)
+panel.BorderSizePixel = 0
+panel.Parent = screenGui
+
+Instance.new("UICorner", panel).CornerRadius = UDim.new(0,10)
+
+local stroke = Instance.new("UIStroke")
+stroke.Parent = panel
+stroke.Color = Color3.fromRGB(60,60,90)
+stroke.Thickness = 1
+
+-- HELPERS
+local function makeLabel(text,y,size,color)
+	local l = Instance.new("TextLabel")
+	l.Size = UDim2.new(1,-20,0,18)
+	l.Position = UDim2.new(0,10,0,y)
+	l.BackgroundTransparency = 1
+	l.Text = text
+	l.TextColor3 = color or Color3.fromRGB(160,160,160)
+	l.Font = Enum.Font.Gotham
+	l.TextSize = size or 11
+	l.TextXAlignment = Enum.TextXAlignment.Left
+	l.Parent = panel
+	return l
+end
+
+local function makeBtn(text,y,color)
+	local b = Instance.new("TextButton")
+	b.Size = UDim2.new(1,-20,0,32)
+	b.Position = UDim2.new(0,10,0,y)
+	b.BackgroundColor3 = color or Color3.fromRGB(40,40,65)
+	b.BorderSizePixel = 0
+	b.Text = text
+	b.TextColor3 = Color3.fromRGB(230,230,230)
+	b.Font = Enum.Font.GothamBold
+	b.TextSize = 12
+	b.Parent = panel
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0,7)
+	return b
+end
+
+-- TITLE
+makeLabel("AUTO FARM",10,13,Color3.fromRGB(220,220,220))
+
+local clickCountLabel = makeLabel("Clicks: 0",30,10)
+
+-- BUTTONS
+local clickBtn   = makeBtn("Auto Click: OFF",  50,  Color3.fromRGB(50,50,80))
+local rebirthBtn = makeBtn("Auto Rebirth: OFF", 95,  Color3.fromRGB(50,50,80))
+local masteryBtn = makeBtn("Auto Mastery: OFF", 140, Color3.fromRGB(50,50,80))
+local hatchBtn   = makeBtn("Auto Hatch: OFF",   185, Color3.fromRGB(50,50,80))
+
+local statusLabel = makeLabel("Status: idle",235,10,Color3.fromRGB(239,159,39))
+
+-- TOGGLE PANEL
+local panelOpen = true
+tab.MouseButton1Click:Connect(function()
+	panelOpen = not panelOpen
+	panel.Visible = panelOpen
+	tab.Text = panelOpen and "<" or ">"
+end)
+
+-- AUTO CLICK
+clickBtn.MouseButton1Click:Connect(function()
+	autoClickEnabled = not autoClickEnabled
+	if autoClickEnabled then
+		clickBtn.Text = "Auto Click: ON"
+		clickBtn.BackgroundColor3 = Color3.fromRGB(50,168,82)
+	else
+		clickBtn.Text = "Auto Click: OFF"
+		clickBtn.BackgroundColor3 = Color3.fromRGB(50,50,80)
+	end
+end)
+
+-- AUTO REBIRTH
+rebirthBtn.MouseButton1Click:Connect(function()
+	autoRebirthEnabled = not autoRebirthEnabled
+	if autoRebirthEnabled then
+		rebirthBtn.Text = "Auto Rebirth: ON"
+		rebirthBtn.BackgroundColor3 = Color3.fromRGB(239,159,39)
+		statusLabel.Text = "Status: auto rebirth"
+		task.spawn(function()
+			while autoRebirthEnabled do
+				rebirthEvent:FireServer(10000000000000000) -- 10QD
+				task.wait(0.05)
+			end
+		end)
+	else
+		rebirthBtn.Text = "Auto Rebirth: OFF"
+		rebirthBtn.BackgroundColor3 = Color3.fromRGB(50,50,80)
+		statusLabel.Text = "Status: idle"
+	end
+end)
+
+-- AUTO MASTERY
+masteryBtn.MouseButton1Click:Connect(function()
+	autoMasteryEnabled = not autoMasteryEnabled
+	if autoMasteryEnabled then
+		masteryBtn.Text = "Auto Mastery: ON"
+		masteryBtn.BackgroundColor3 = Color3.fromRGB(0,170,255)
+		statusLabel.Text = "Status: auto mastery"
+		task.spawn(function()
+			while autoMasteryEnabled do
+				masteryFunction:InvokeServer()
+				task.wait(0.1)
+			end
+		end)
+	else
+		masteryBtn.Text = "Auto Mastery: OFF"
+		masteryBtn.BackgroundColor3 = Color3.fromRGB(50,50,80)
+		statusLabel.Text = "Status: idle"
+	end
+end)
+
+-- AUTO HATCH
+hatchBtn.MouseButton1Click:Connect(function()
+	autoHatchEnabled = not autoHatchEnabled
+	if autoHatchEnabled then
+		hatchBtn.Text = "Auto Hatch: ON"
+		hatchBtn.BackgroundColor3 = Color3.fromRGB(180,50,255)
+		statusLabel.Text = "Status: auto hatch"
+		task.spawn(function()
+			while autoHatchEnabled do
+				hatchFunction:InvokeServer("Volcano", "Triple")
+				task.wait(0.1)
+			end
+		end)
+	else
+		hatchBtn.Text = "Auto Hatch: OFF"
+		hatchBtn.BackgroundColor3 = Color3.fromRGB(50,50,80)
+		statusLabel.Text = "Status: idle"
+	end
+end)
+
+-- MAIN LOOP
+RunService.Heartbeat:Connect(function(dt)
+	if autoClickEnabled then
+		clickTimer += dt
+		if clickTimer >= 0.1 then
+			clickTimer = 0
+			clickCount += 1
+			clickCountLabel.Text = "Clicks: "..clickCount
+			clickEvent:FireServer()
+		end
+	end
+end)
