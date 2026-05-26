@@ -1,0 +1,352 @@
+-- LocalScript inside StarterPlayerScripts
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- REMOTES
+local clickEvent = ReplicatedStorage
+	:WaitForChild("Events")
+	:WaitForChild("Click")
+
+local rebirthEvent = ReplicatedStorage
+	:WaitForChild("Events")
+	:WaitForChild("Rebirth")
+
+local masteryFunction = ReplicatedStorage
+	:WaitForChild("Functions")
+	:WaitForChild("IncreaseMastery")
+
+local hatchFunction = ReplicatedStorage
+	:WaitForChild("Functions")
+	:WaitForChild("Hatch")
+
+local buyPotionFunction = ReplicatedStorage
+	:WaitForChild("Functions")
+	:WaitForChild("BuyPotion")
+
+local purchaseUpgradeFunction = ReplicatedStorage
+	:WaitForChild("Functions")
+	:WaitForChild("PurchaseUpgrade")
+
+-- STATES
+local autoClickEnabled = false
+local autoRebirthEnabled = false
+local autoMasteryEnabled = false
+local autoHatchEnabled = false
+local autoClickPotionEnabled = false
+local autoGemPotionEnabled = false
+local autoRebirthPotionEnabled = false
+local autoLuckPotionEnabled = false
+local autoUpgradesEnabled = false
+
+local clickCount = 0
+local clickTimer = 0
+
+-- GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AutoGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+-- TAB
+local tab = Instance.new("TextButton")
+tab.Size = UDim2.new(0,22,0,60)
+tab.Position = UDim2.new(1,-22,0,20)
+tab.BackgroundColor3 = Color3.fromRGB(20,20,35)
+tab.BorderSizePixel = 0
+tab.Text = "<"
+tab.TextColor3 = Color3.fromRGB(180,180,180)
+tab.Font = Enum.Font.GothamBold
+tab.TextSize = 12
+tab.Parent = screenGui
+
+Instance.new("UICorner", tab).CornerRadius = UDim.new(0,6)
+
+-- PANEL
+local panel = Instance.new("Frame")
+panel.Size = UDim2.new(0,190,0,680)
+panel.Position = UDim2.new(1,-212,0,20)
+panel.BackgroundColor3 = Color3.fromRGB(14,14,26)
+panel.BorderSizePixel = 0
+panel.Parent = screenGui
+
+Instance.new("UICorner", panel).CornerRadius = UDim.new(0,10)
+
+local stroke = Instance.new("UIStroke")
+stroke.Parent = panel
+stroke.Color = Color3.fromRGB(60,60,90)
+stroke.Thickness = 1
+
+-- SCROLL
+local scroll = Instance.new("ScrollingFrame")
+scroll.Size = UDim2.new(1,0,1,0)
+scroll.Position = UDim2.new(0,0,0,0)
+scroll.BackgroundTransparency = 1
+scroll.BorderSizePixel = 0
+scroll.ScrollBarThickness = 3
+scroll.CanvasSize = UDim2.new(0,0,0,680)
+scroll.Parent = panel
+
+-- HELPERS
+local function makeLabel(text,y,size,color)
+	local l = Instance.new("TextLabel")
+	l.Size = UDim2.new(1,-20,0,18)
+	l.Position = UDim2.new(0,10,0,y)
+	l.BackgroundTransparency = 1
+	l.Text = text
+	l.TextColor3 = color or Color3.fromRGB(160,160,160)
+	l.Font = Enum.Font.Gotham
+	l.TextSize = size or 11
+	l.TextXAlignment = Enum.TextXAlignment.Left
+	l.Parent = scroll
+	return l
+end
+
+local function makeBtn(text,y,color)
+	local b = Instance.new("TextButton")
+	b.Size = UDim2.new(1,-20,0,32)
+	b.Position = UDim2.new(0,10,0,y)
+	b.BackgroundColor3 = color or Color3.fromRGB(40,40,65)
+	b.BorderSizePixel = 0
+	b.Text = text
+	b.TextColor3 = Color3.fromRGB(230,230,230)
+	b.Font = Enum.Font.GothamBold
+	b.TextSize = 12
+	b.Parent = scroll
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0,7)
+	return b
+end
+
+-- TITLE
+makeLabel("AUTO FARM", 10, 13, Color3.fromRGB(220,220,220))
+local clickCountLabel = makeLabel("Clicks: 0", 30, 10)
+
+-- SECTION: CORE
+makeLabel("— CORE —", 55, 10, Color3.fromRGB(120,120,160))
+local clickBtn   = makeBtn("Auto Click: OFF",   72,  Color3.fromRGB(50,50,80))
+local rebirthBtn = makeBtn("Auto Rebirth: OFF", 112, Color3.fromRGB(50,50,80))
+local masteryBtn = makeBtn("Auto Mastery: OFF", 152, Color3.fromRGB(50,50,80))
+local hatchBtn   = makeBtn("Auto Hatch: OFF",   192, Color3.fromRGB(50,50,80))
+
+-- SECTION: POTIONS
+makeLabel("— POTIONS (every 20 min) —", 240, 10, Color3.fromRGB(120,120,160))
+local clickPotBtn   = makeBtn("Auto Click Potion: OFF",   257, Color3.fromRGB(50,50,80))
+local gemPotBtn     = makeBtn("Auto Gem Potion: OFF",     297, Color3.fromRGB(50,50,80))
+local rebirthPotBtn = makeBtn("Auto Rebirth Potion: OFF", 337, Color3.fromRGB(50,50,80))
+local luckPotBtn    = makeBtn("Auto Luck Potion: OFF",    377, Color3.fromRGB(50,50,80))
+
+-- SECTION: UPGRADES
+makeLabel("— UPGRADES —", 425, 10, Color3.fromRGB(120,120,160))
+local upgradesBtn = makeBtn("Auto Buy Upgrades: OFF", 442, Color3.fromRGB(50,50,80))
+
+local statusLabel = makeLabel("Status: idle", 490, 10, Color3.fromRGB(239,159,39))
+
+-- TOGGLE PANEL
+local panelOpen = true
+tab.MouseButton1Click:Connect(function()
+	panelOpen = not panelOpen
+	panel.Visible = panelOpen
+	tab.Text = panelOpen and "<" or ">"
+end)
+
+-- AUTO CLICK
+clickBtn.MouseButton1Click:Connect(function()
+	autoClickEnabled = not autoClickEnabled
+	if autoClickEnabled then
+		clickBtn.Text = "Auto Click: ON"
+		clickBtn.BackgroundColor3 = Color3.fromRGB(50,168,82)
+	else
+		clickBtn.Text = "Auto Click: OFF"
+		clickBtn.BackgroundColor3 = Color3.fromRGB(50,50,80)
+	end
+end)
+
+-- AUTO REBIRTH
+rebirthBtn.MouseButton1Click:Connect(function()
+	autoRebirthEnabled = not autoRebirthEnabled
+	if autoRebirthEnabled then
+		rebirthBtn.Text = "Auto Rebirth: ON"
+		rebirthBtn.BackgroundColor3 = Color3.fromRGB(239,159,39)
+		statusLabel.Text = "Status: auto rebirth"
+		task.spawn(function()
+			while autoRebirthEnabled do
+				rebirthEvent:FireServer(10000000000000000) -- 10QD
+				task.wait(0.05)
+			end
+		end)
+	else
+		rebirthBtn.Text = "Auto Rebirth: OFF"
+		rebirthBtn.BackgroundColor3 = Color3.fromRGB(50,50,80)
+		statusLabel.Text = "Status: idle"
+	end
+end)
+
+-- AUTO MASTERY
+masteryBtn.MouseButton1Click:Connect(function()
+	autoMasteryEnabled = not autoMasteryEnabled
+	if autoMasteryEnabled then
+		masteryBtn.Text = "Auto Mastery: ON"
+		masteryBtn.BackgroundColor3 = Color3.fromRGB(0,170,255)
+		statusLabel.Text = "Status: auto mastery"
+		task.spawn(function()
+			while autoMasteryEnabled do
+				masteryFunction:InvokeServer()
+				task.wait(0.1)
+			end
+		end)
+	else
+		masteryBtn.Text = "Auto Mastery: OFF"
+		masteryBtn.BackgroundColor3 = Color3.fromRGB(50,50,80)
+		statusLabel.Text = "Status: idle"
+	end
+end)
+
+-- AUTO HATCH
+hatchBtn.MouseButton1Click:Connect(function()
+	autoHatchEnabled = not autoHatchEnabled
+	if autoHatchEnabled then
+		hatchBtn.Text = "Auto Hatch: ON"
+		hatchBtn.BackgroundColor3 = Color3.fromRGB(180,50,255)
+		statusLabel.Text = "Status: auto hatch"
+		task.spawn(function()
+			while autoHatchEnabled do
+				hatchFunction:InvokeServer("Volcano", "Triple")
+				task.wait(0.1)
+			end
+		end)
+	else
+		hatchBtn.Text = "Auto Hatch: OFF"
+		hatchBtn.BackgroundColor3 = Color3.fromRGB(50,50,80)
+		statusLabel.Text = "Status: idle"
+	end
+end)
+
+-- POTION HELPER
+local function startPotion(getEnabled, btn, label, potionType)
+	task.spawn(function()
+		while getEnabled() do
+			buyPotionFunction:InvokeServer(potionType, 100)
+			local timer = 0
+			while timer < 1200 and getEnabled() do
+				task.wait(1)
+				timer += 1
+			end
+		end
+		btn.Text = "Auto "..label.." Potion: OFF"
+		btn.BackgroundColor3 = Color3.fromRGB(50,50,80)
+		statusLabel.Text = "Status: idle"
+	end)
+end
+
+-- AUTO CLICK POTION
+clickPotBtn.MouseButton1Click:Connect(function()
+	autoClickPotionEnabled = not autoClickPotionEnabled
+	if autoClickPotionEnabled then
+		clickPotBtn.Text = "Auto Click Potion: ON"
+		clickPotBtn.BackgroundColor3 = Color3.fromRGB(50,168,82)
+		statusLabel.Text = "Status: click potion"
+		startPotion(function() return autoClickPotionEnabled end, clickPotBtn, "Click", "Click")
+	else
+		autoClickPotionEnabled = false
+	end
+end)
+
+-- AUTO GEM POTION
+gemPotBtn.MouseButton1Click:Connect(function()
+	autoGemPotionEnabled = not autoGemPotionEnabled
+	if autoGemPotionEnabled then
+		gemPotBtn.Text = "Auto Gem Potion: ON"
+		gemPotBtn.BackgroundColor3 = Color3.fromRGB(0,200,180)
+		statusLabel.Text = "Status: gem potion"
+		startPotion(function() return autoGemPotionEnabled end, gemPotBtn, "Gem", "Gem")
+	else
+		autoGemPotionEnabled = false
+	end
+end)
+
+-- AUTO REBIRTH POTION
+rebirthPotBtn.MouseButton1Click:Connect(function()
+	autoRebirthPotionEnabled = not autoRebirthPotionEnabled
+	if autoRebirthPotionEnabled then
+		rebirthPotBtn.Text = "Auto Rebirth Potion: ON"
+		rebirthPotBtn.BackgroundColor3 = Color3.fromRGB(239,159,39)
+		statusLabel.Text = "Status: rebirth potion"
+		startPotion(function() return autoRebirthPotionEnabled end, rebirthPotBtn, "Rebirth", "Rebirth")
+	else
+		autoRebirthPotionEnabled = false
+	end
+end)
+
+-- AUTO LUCK POTION
+luckPotBtn.MouseButton1Click:Connect(function()
+	autoLuckPotionEnabled = not autoLuckPotionEnabled
+	if autoLuckPotionEnabled then
+		luckPotBtn.Text = "Auto Luck Potion: ON"
+		luckPotBtn.BackgroundColor3 = Color3.fromRGB(255,80,180)
+		statusLabel.Text = "Status: luck potion"
+		startPotion(function() return autoLuckPotionEnabled end, luckPotBtn, "Luck", "Luck")
+	else
+		autoLuckPotionEnabled = false
+	end
+end)
+
+-- AUTO BUY UPGRADES
+upgradesBtn.MouseButton1Click:Connect(function()
+	autoUpgradesEnabled = not autoUpgradesEnabled
+	if autoUpgradesEnabled then
+		upgradesBtn.Text = "Auto Buy Upgrades: ON"
+		upgradesBtn.BackgroundColor3 = Color3.fromRGB(255,140,0)
+		statusLabel.Text = "Status: buying upgrades"
+		task.spawn(function()
+			while autoUpgradesEnabled do
+				-- SPAWN UPGRADES
+				purchaseUpgradeFunction:InvokeServer("Spawn", "GemMulti")
+				task.wait(0.1)
+				purchaseUpgradeFunction:InvokeServer("Spawn", "ClickMulti")
+				task.wait(0.1)
+				purchaseUpgradeFunction:InvokeServer("Spawn", "GemChance")
+				task.wait(0.1)
+				purchaseUpgradeFunction:InvokeServer("Spawn", "MoreStorage")
+				task.wait(0.1)
+				purchaseUpgradeFunction:InvokeServer("Spawn", "LuckMulti")
+				task.wait(0.1)
+				purchaseUpgradeFunction:InvokeServer("Spawn", "HatchSpeed")
+				task.wait(0.1)
+				-- SUMMER UPGRADES
+				purchaseUpgradeFunction:InvokeServer("Summer", "CoconutMulti")
+				task.wait(0.1)
+				purchaseUpgradeFunction:InvokeServer("Summer", "ClickMulti")
+				task.wait(0.1)
+				purchaseUpgradeFunction:InvokeServer("Summer", "GemMulti")
+				task.wait(0.1)
+				purchaseUpgradeFunction:InvokeServer("Summer", "MoreStorage")
+				task.wait(0.1)
+				purchaseUpgradeFunction:InvokeServer("Summer", "LuckMulti")
+				task.wait(0.1)
+				task.wait(0.5)
+			end
+			upgradesBtn.Text = "Auto Buy Upgrades: OFF"
+			upgradesBtn.BackgroundColor3 = Color3.fromRGB(50,50,80)
+			statusLabel.Text = "Status: idle"
+		end)
+	else
+		autoUpgradesEnabled = false
+	end
+end)
+
+-- MAIN LOOP
+RunService.Heartbeat:Connect(function(dt)
+	if autoClickEnabled then
+		clickTimer += dt
+		if clickTimer >= 0.1 then
+			clickTimer = 0
+			clickCount += 1
+			clickCountLabel.Text = "Clicks: "..clickCount
+			clickEvent:FireServer()
+		end
+	end
+end)
