@@ -123,7 +123,7 @@ end
 local clickBtn    = nextBtn("Auto Click: OFF",        Color3.fromRGB(50,50,80))
 local rebirthBtn  = nextBtn("Auto Rebirth: OFF",      Color3.fromRGB(50,50,80))
 local masteryBtn  = nextBtn("Auto Mastery: OFF",      Color3.fromRGB(50,50,80))
-local hatchBtn    = nextBtn("Auto Hatch: OFF",         Color3.fromRGB(50,50,80))
+local hatchBtn    = nextBtn("Auto Hatch: OFF",        Color3.fromRGB(50,50,80))
 local potionBtn   = nextBtn("Auto Buy Potions: OFF",  Color3.fromRGB(50,50,80))
 local upgradesBtn = nextBtn("Auto Buy Upgrades: OFF", Color3.fromRGB(50,50,80))
 
@@ -198,7 +198,7 @@ hatchBtn.MouseButton1Click:Connect(function()
 		statusLabel.Text = "Status: auto hatch"
 		task.spawn(function()
 			while autoHatchEnabled do
-				hatchFunction:InvokeServer("Volcano", "Triple")
+				hatchFunction:InvokeServer("Snow", "Triple") -- Snow egg
 				task.wait(0.1)
 			end
 		end)
