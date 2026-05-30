@@ -24,11 +24,21 @@ local hatchFunction = ReplicatedStorage
 	:WaitForChild("Functions")
 	:WaitForChild("Hatch")
 
+local buyPotionFunction = ReplicatedStorage
+	:WaitForChild("Functions")
+	:WaitForChild("BuyPotion")
+
+local purchaseUpgradeFunction = ReplicatedStorage
+	:WaitForChild("Functions")
+	:WaitForChild("PurchaseUpgrade")
+
 -- STATES
 local autoClickEnabled = false
 local autoRebirthEnabled = false
 local autoMasteryEnabled = false
 local autoHatchEnabled = false
+local autoPotionEnabled = false
+local autoUpgradesEnabled = false
 
 local clickCount = 0
 local clickTimer = 0
@@ -55,7 +65,7 @@ Instance.new("UICorner", tab).CornerRadius = UDim.new(0,6)
 
 -- PANEL
 local panel = Instance.new("Frame")
-panel.Size = UDim2.new(0,190,0,350)
+panel.Size = UDim2.new(0,190,0,400)
 panel.Position = UDim2.new(1,-212,0,20)
 panel.BackgroundColor3 = Color3.fromRGB(14,14,26)
 panel.BorderSizePixel = 0
@@ -69,7 +79,7 @@ stroke.Color = Color3.fromRGB(60,60,90)
 stroke.Thickness = 1
 
 -- HELPERS
-local function makeLabel(text,y,size,color)
+local function makeLabel(text, y, size, color)
 	local l = Instance.new("TextLabel")
 	l.Size = UDim2.new(1,-20,0,18)
 	l.Position = UDim2.new(0,10,0,y)
@@ -83,7 +93,7 @@ local function makeLabel(text,y,size,color)
 	return l
 end
 
-local function makeBtn(text,y,color)
+local function makeBtn(text, y, color)
 	local b = Instance.new("TextButton")
 	b.Size = UDim2.new(1,-20,0,32)
 	b.Position = UDim2.new(0,10,0,y)
@@ -99,17 +109,25 @@ local function makeBtn(text,y,color)
 end
 
 -- TITLE
-makeLabel("AUTO FARM",10,13,Color3.fromRGB(220,220,220))
-
-local clickCountLabel = makeLabel("Clicks: 0",30,10)
+makeLabel("AUTO FARM", 10, 13, Color3.fromRGB(220,220,220))
+local clickCountLabel = makeLabel("Clicks: 0", 28, 10)
 
 -- BUTTONS
-local clickBtn   = makeBtn("Auto Click: OFF",   50,  Color3.fromRGB(50,50,80))
-local rebirthBtn = makeBtn("Auto Rebirth: OFF",  95,  Color3.fromRGB(50,50,80))
-local masteryBtn = makeBtn("Auto Mastery: OFF",  140, Color3.fromRGB(50,50,80))
-local hatchBtn   = makeBtn("Auto Hatch: OFF",    185, Color3.fromRGB(50,50,80))
+local y = 46
+local function nextBtn(text, color)
+	local b = makeBtn(text, y, color)
+	y += 34
+	return b
+end
 
-local statusLabel = makeLabel("Status: idle",235,10,Color3.fromRGB(239,159,39))
+local clickBtn    = nextBtn("Auto Click: OFF",        Color3.fromRGB(50,50,80))
+local rebirthBtn  = nextBtn("Auto Rebirth: OFF",      Color3.fromRGB(50,50,80))
+local masteryBtn  = nextBtn("Auto Mastery: OFF",      Color3.fromRGB(50,50,80))
+local hatchBtn    = nextBtn("Auto Hatch: OFF",         Color3.fromRGB(50,50,80))
+local potionBtn   = nextBtn("Auto Buy Potions: OFF",  Color3.fromRGB(50,50,80))
+local upgradesBtn = nextBtn("Auto Buy Upgrades: OFF", Color3.fromRGB(50,50,80))
+
+local statusLabel = makeLabel("Status: idle", y + 4, 10, Color3.fromRGB(239,159,39))
 
 -- TOGGLE PANEL
 local panelOpen = true
@@ -140,7 +158,7 @@ rebirthBtn.MouseButton1Click:Connect(function()
 		statusLabel.Text = "Status: auto rebirth"
 		task.spawn(function()
 			while autoRebirthEnabled do
-				rebirthEvent:FireServer(50000000000000000000) -- 50QN
+				rebirthEvent:FireServer(50000000000000) -- 50T
 				task.wait(0.05)
 			end
 		end)
@@ -180,7 +198,7 @@ hatchBtn.MouseButton1Click:Connect(function()
 		statusLabel.Text = "Status: auto hatch"
 		task.spawn(function()
 			while autoHatchEnabled do
-				hatchFunction:InvokeServer("Snow", "Triple") -- Snow egg
+				hatchFunction:InvokeServer("Volcano", "Triple")
 				task.wait(0.1)
 			end
 		end)
@@ -188,6 +206,80 @@ hatchBtn.MouseButton1Click:Connect(function()
 		hatchBtn.Text = "Auto Hatch: OFF"
 		hatchBtn.BackgroundColor3 = Color3.fromRGB(50,50,80)
 		statusLabel.Text = "Status: idle"
+	end
+end)
+
+-- AUTO BUY POTIONS
+potionBtn.MouseButton1Click:Connect(function()
+	autoPotionEnabled = not autoPotionEnabled
+	if autoPotionEnabled then
+		potionBtn.Text = "Auto Buy Potions: ON"
+		potionBtn.BackgroundColor3 = Color3.fromRGB(50,168,82)
+		statusLabel.Text = "Status: auto potions"
+		task.spawn(function()
+			while autoPotionEnabled do
+				buyPotionFunction:InvokeServer("Click", 100)
+				task.wait(0.1)
+				buyPotionFunction:InvokeServer("Gem", 100)
+				task.wait(0.1)
+				buyPotionFunction:InvokeServer("Rebirth", 100)
+				task.wait(0.1)
+				buyPotionFunction:InvokeServer("Luck", 100)
+				local timer = 0
+				while timer < 1200 and autoPotionEnabled do
+					task.wait(1)
+					timer += 1
+				end
+			end
+			potionBtn.Text = "Auto Buy Potions: OFF"
+			potionBtn.BackgroundColor3 = Color3.fromRGB(50,50,80)
+			statusLabel.Text = "Status: idle"
+		end)
+	else
+		autoPotionEnabled = false
+	end
+end)
+
+-- AUTO BUY UPGRADES
+upgradesBtn.MouseButton1Click:Connect(function()
+	autoUpgradesEnabled = not autoUpgradesEnabled
+	if autoUpgradesEnabled then
+		upgradesBtn.Text = "Auto Buy Upgrades: ON"
+		upgradesBtn.BackgroundColor3 = Color3.fromRGB(255,140,0)
+		statusLabel.Text = "Status: auto upgrades"
+		task.spawn(function()
+			while autoUpgradesEnabled do
+				purchaseUpgradeFunction:InvokeServer("Spawn", "GemMulti")
+				task.wait(0.1)
+				purchaseUpgradeFunction:InvokeServer("Spawn", "ClickMulti")
+				task.wait(0.1)
+				purchaseUpgradeFunction:InvokeServer("Spawn", "GemChance")
+				task.wait(0.1)
+				purchaseUpgradeFunction:InvokeServer("Spawn", "MoreStorage")
+				task.wait(0.1)
+				purchaseUpgradeFunction:InvokeServer("Spawn", "LuckMulti")
+				task.wait(0.1)
+				purchaseUpgradeFunction:InvokeServer("Spawn", "HatchSpeed")
+				task.wait(0.1)
+				purchaseUpgradeFunction:InvokeServer("Spawn", "RebirthButtons")
+				task.wait(0.1)
+				purchaseUpgradeFunction:InvokeServer("Summer", "CoconutMulti")
+				task.wait(0.1)
+				purchaseUpgradeFunction:InvokeServer("Summer", "ClickMulti")
+				task.wait(0.1)
+				purchaseUpgradeFunction:InvokeServer("Summer", "GemMulti")
+				task.wait(0.1)
+				purchaseUpgradeFunction:InvokeServer("Summer", "MoreStorage")
+				task.wait(0.1)
+				purchaseUpgradeFunction:InvokeServer("Summer", "LuckMulti")
+				task.wait(0.5)
+			end
+			upgradesBtn.Text = "Auto Buy Upgrades: OFF"
+			upgradesBtn.BackgroundColor3 = Color3.fromRGB(50,50,80)
+			statusLabel.Text = "Status: idle"
+		end)
+	else
+		autoUpgradesEnabled = false
 	end
 end)
 
