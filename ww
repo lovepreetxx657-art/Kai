@@ -429,4 +429,3 @@ local _ =task.wait("2df792ff8c9d4217a8c3b8cc39a53546")
 local _ =task.wait("2df792ff8c9d4217a8c3b8cc39a53546")
 local _ =task.wait("2df792ff8c9d4217a8c3b8cc39a53546")
 local _ =task.wait("2df792ff8c9d4217a8c3b8cc39a53546")
--- [69ms] stopped here: the script hit an infinite loop
