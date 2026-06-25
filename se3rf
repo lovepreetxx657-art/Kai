@@ -1,8 +1,8 @@
-if getgenv().Srt_loaded then
+if getgenv().valary_loaded then
     return
 end
 
-getgenv().Srt_loaded = true
+getgenv().valary_loaded = true
 
 if LPH_OBFUSCATED == nil then
     local assert = assert
@@ -62,7 +62,7 @@ if LPH_OBFUSCATED == nil then
     end
     LRM_IsUserPremium = false
     LRM_LinkedDiscordID = "1096603799159832636"
-    LRM_ScriptName = "Srt"
+    LRM_ScriptName = "valary"
     LRM_TotalExecutions = 0
     LRM_SecondsLeft = math.huge
     LRM_UserNote = "Developer";
@@ -117,7 +117,7 @@ LRM_INIT_SCRIPT(function()
         end)
 
         if not Success and (not Function or typeof(Function) ~= "function") then
-            game:GetService("Players").LocalPlayer:Kick("Srt.gg | Anti-Cheat was updated! Wait for script update, you can not use it at this moment.")
+            game:GetService("Players").LocalPlayer:Kick("Valary.gg | Anti-Cheat was updated! Wait for script update, you can not use it at this moment.")
             task.wait(9e9)
         end
 
@@ -137,8 +137,8 @@ LRM_INIT_SCRIPT(function()
     end
 end)
 
-if not isfile('SrtGG_RejoinerSettings.txt') then
-    writefile('SrtGG_RejoinerSettings.txt', '')
+if not isfile('ValaryGG_RejoinerSettings.txt') then
+    writefile('ValaryGG_RejoinerSettings.txt', '')
 end
 
 local LoadingTick = os.clock()
@@ -517,7 +517,7 @@ end)
 local Config = {
     ["Fake_Part"] = nil;
     ["Gun_Handle"] = nil;
-    ["Srt_Users"] = {};
+    ["Valary_Users"] = {};
     ["Whitelisted_People"] = {};
 
     ["Spread"] = {Enabled = false; Reduce = 100};
@@ -634,7 +634,7 @@ local Config = {
         ["KillAura"] = {
             ["Enabled"] = false;
             ["Range"] = 375;
-            ["WhitelistSrtUsers"] = false;
+            ["WhitelistValaryUsers"] = false;
         };
 
         ["PingBasedTiming"] = true;
@@ -647,7 +647,7 @@ local Config = {
 
         ["InfiniteStamina"] = false;
         ["HideName"] = false;
-        ["HideName_NameValue"] = 'Srt';
+        ["HideName_NameValue"] = 'discord.gg/valarygg';
         ["InstantInteract"] = false;
 
         ["Can_Teleport"] = false;
@@ -838,7 +838,7 @@ Config.SendWebhook = LPH_NO_VIRTUALIZE(function()
     local Number = New_Balance - tonumber(Start_Balance)
 
     local data = {
-        ["username"] = "Srt.gg | South Bronx Stats Webhook",
+        ["username"] = "valary.gg | South Bronx Stats Webhook",
         ["embeds"] = {{
             ["title"] = string.format("Player : %s | Data Report", Config.South_Bronx.FarmingUtilities.Log_SouthBronx_Name and LocalPlayer:GetAttribute("FullName") or LocalPlayer.Name),
             ["color"] = 65280, -- green
@@ -1061,7 +1061,7 @@ do -- FrameWork
         frame.Parent = Black_UI
     
         local textLabel = Instance.new("TextLabel")
-        textLabel.Name = "\nhideuiSrt"
+        textLabel.Name = "\nhideuivalary"
         textLabel.Size = UDim2.new(0, 400, 0, 100)
         textLabel.Font = Enum.Font.SourceSansBold
         textLabel.RichText = true
@@ -19119,9 +19119,9 @@ Library:Notification({
 Library:Init() -- put this at the end of ur script or the autoload will not work
 
 if getgenv().rejoined_and_farming then
-    local Rejoin_Enabled = string.find(readfile("SrtGG_RejoinerSettings.txt"), ' enabled ') ~= nil
-    local KillAura_Enabled = string.find(readfile("SrtGG_RejoinerSettings.txt"), ' killaura ') ~= nil
-    local AutoBuyGun_Enabled = string.find(readfile("SrtGG_RejoinerSettings.txt"), ' autobuygun ') ~= nil
+    local Rejoin_Enabled = string.find(readfile("ValaryGG_RejoinerSettings.txt"), ' enabled ') ~= nil
+    local KillAura_Enabled = string.find(readfile("ValaryGG_RejoinerSettings.txt"), ' killaura ') ~= nil
+    local AutoBuyGun_Enabled = string.find(readfile("ValaryGG_RejoinerSettings.txt"), ' autobuygun ') ~= nil
 
     --[[if KillAura_Enabled then
         KillAura_Range:Set(150)
