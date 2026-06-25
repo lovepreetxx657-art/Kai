@@ -1,3 +1,152 @@
+if getgenv().valary_loaded then
+    return
+end
+
+getgenv().valary_loaded = true
+
+if LPH_OBFUSCATED == nil then
+    local assert = assert
+    local type = type
+    local setfenv = setfenv
+    LPH_ENCNUM = function(toEncrypt, ...)
+        assert(type(toEncrypt) == "number" and #{...} == 0, "LPH_ENCNUM only accepts a single constant double or integer as an argument.")
+        return toEncrypt
+    end
+    LPH_NUMENC = LPH_ENCNUM
+    LPH_ENCSTR = function(toEncrypt, ...)
+        assert(type(toEncrypt) == "string" and #{...} == 0, "LPH_ENCSTR only accepts a single constant string as an argument.")
+        return toEncrypt
+    end
+    LPH_STRENC = LPH_ENCSTR
+    LPH_ENCFUNC = function(toEncrypt, encKey, decKey, ...)
+        
+        assert(type(toEncrypt) == "function" and type(encKey) == "string" and #{...} == 0, "LPH_ENCFUNC accepts a constant function, constant string, and string variable as arguments.")
+        return toEncrypt
+    end
+    LPH_FUNCENC = LPH_ENCFUNC
+    LPH_JIT = function(f, ...)
+        assert(type(f) == "function" and #{...} == 0, "LPH_JIT only accepts a single constant function as an argument.")
+        return f
+    end
+    LPH_JIT_MAX = LPH_JIT
+    LPH_NO_VIRTUALIZE = function(f, ...)
+        assert(type(f) == "function" and #{...} == 0, "LPH_NO_VIRTUALIZE only accepts a single constant function as an argument.")
+        return f
+    end
+    LRM_INIT_SCRIPT = function(f)
+        return f()
+    end
+    LPH_NO_UPVALUES = function(f, ...)
+        assert(type(setfenv) == "function", "LPH_NO_UPVALUES can only be used on Lua versions with getfenv & setfenv")
+        assert(type(f) == "function" and #{...} == 0, "LPH_NO_UPVALUES only accepts a single constant function as an argument.")
+        local env = getrenv()
+        return setfenv(
+            LPH_NO_VIRTUALIZE(function(...)
+                return func(...)
+            end),
+            setmetatable(
+                {
+                    func = f
+                },
+                {
+                    __index = env,
+                    __newindex = env
+                }
+            )
+        )
+    end
+    LPH_CRASH = function(...)
+        assert(#{...} == 0, "LPH_CRASH does not accept any arguments.")
+        game:Shutdown()
+        while true do end
+    end
+    LRM_IsUserPremium = false
+    LRM_LinkedDiscordID = "1096603799159832636"
+    LRM_ScriptName = "valary"
+    LRM_TotalExecutions = 0
+    LRM_SecondsLeft = math.huge
+    LRM_UserNote = "Developer";
+end;
+
+LRM_INIT_SCRIPT(function()
+    task.wait(1)
+
+    if not game:IsLoaded() then
+        game.Loaded:Wait()
+    end
+
+    if not game:GetService("Players").LocalPlayer.Character then 
+        game:GetService("Players").LocalPlayer.CharacterAdded:Wait()
+    end
+
+    if not getgenv().rejoined_and_farming then
+        repeat task.wait(0.1) until game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("IntroUI") == nil
+    else
+        task.wait(60)
+    end
+
+    if game.PlaceId ~= 15124180230 then
+        local RunService = game:GetService("RunService")
+
+        local Success, Function = xpcall(function()
+            local Function = filtergc("function", {StartLine = 4262, IgnoreExecutor = true}, true)
+
+            if not Function or typeof(Function) ~= "function" then
+                return error() 
+            end
+
+            return Function
+        end, function()
+            local Function = nil;
+
+            for Index, Value in getgc() do
+                if typeof(Value) == "function" and not iscclosure(Value) then
+                    if debug.info(Value, 'l') == 4262 then
+                        Function = Value
+
+                        break
+                    end
+                end
+            end
+
+            if not Function or typeof(Function) ~= "function" then
+                return error() 
+            end
+
+            return Function
+        end)
+
+        if not Success and (not Function or typeof(Function) ~= "function") then
+            game:GetService("Players").LocalPlayer:Kick("Valary.gg | Anti-Cheat was updated! Wait for script update, you can not use it at this moment.")
+            task.wait(9e9)
+        end
+
+        debug.setupvalue(Function, 4, 0/0)
+
+        task.spawn(function()
+            while RunService.Stepped:Wait() do
+                debug.setupvalue(Function, 4, 0/0)					
+            end
+        end)
+    end
+
+    if getgenv().rejoined_and_farming then
+        getconnections(game:GetService("Players").LocalPlayer.PlayerGui.IntroUI.SurfaceGui.Frame.Play.MouseButton1Click)[1]:Fire()
+
+        task.wait(10)
+    end
+end)
+
+if not isfile('ValaryGG_RejoinerSettings.txt') then
+    writefile('ValaryGG_RejoinerSettings.txt', '')
+end
+
+local LoadingTick = os.clock()
+
+local LocalPlayer = game:GetService("Players").LocalPlayer
+
+local Console_Server = game.PlaceId == 15124180230
+
 do -- Hyphon Emulation
     local Hyphon_Script = nil;
     local OWpCsbCTXfeDG = filtergc('function', {IgnoreExecutor = true, Name = "OWpCsbCTXfeDG"}, true)
