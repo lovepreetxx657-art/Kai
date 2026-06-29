@@ -1,0 +1,189 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- 🌸 ROOT GUI (unchanged)
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "SrtRosewareUltimateCanvas"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = playerGui
+
+-- 🌸 MAIN PANEL (unchanged)
+local Frame = Instance.new("Frame")
+Frame.Name = "MainPanel"
+Frame.Size = UDim2.new(0, 620, 0, 480)
+Frame.Position = UDim2.new(0.5, -310, 0.5, -210)
+Frame.BackgroundColor3 = Color3.fromRGB(12, 10, 15)
+Frame.BackgroundTransparency = 0.22
+Frame.BorderSizePixel = 0
+Frame.Active = true
+Frame.ZIndex = 3
+Frame.Visible = true
+Frame.Parent = ScreenGui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 16)
+MainCorner.Parent = Frame
+
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Thickness = 1.2
+UIStroke.Color = Color3.fromRGB(255, 10, 130)
+UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+UIStroke.Parent = Frame
+
+-- 🌸 ROSE BACKGROUND (unchanged)
+local RoseBackground = Instance.new("ImageLabel")
+RoseBackground.Name = "BackingRose"
+RoseBackground.Size = UDim2.new(0, 420, 0, 420)
+RoseBackground.Position = UDim2.new(0.5, -210, 0.5, -180)
+RoseBackground.BackgroundTransparency = 1
+RoseBackground.Image = "rbxassetid://13470764373"
+RoseBackground.ImageColor3 = Color3.fromRGB(200, 5, 95)
+RoseBackground.ImageTransparency = 0.80
+RoseBackground.ZIndex = 1
+RoseBackground.Parent = Frame
+
+-- 🌸 WATERMARK (unchanged)
+local SrtWatermark = Instance.new("TextLabel")
+SrtWatermark.Name = "SrtWatermark"
+SrtWatermark.Size = UDim2.new(1, 0, 0, 120)
+SrtWatermark.Position = UDim2.new(0, 0, 0.5, -15)
+SrtWatermark.BackgroundTransparency = 1
+SrtWatermark.Text = "srt"
+SrtWatermark.TextColor3 = Color3.fromRGB(255, 10, 130)
+SrtWatermark.TextTransparency = 0.72
+SrtWatermark.TextSize = 120
+SrtWatermark.Font = Enum.Font.FredokaOne
+SrtWatermark.Rotation = -8
+SrtWatermark.ZIndex = 2
+SrtWatermark.Parent = Frame
+
+-- 🌸 REMOVE ALL TABS / ESP / SETTINGS / COLOR PICKER
+-- (Everything removed intentionally)
+
+-- 🌸 BUTTON CREATOR
+local function createButton(text, yPos)
+    local Btn = Instance.new("TextButton")
+    Btn.Size = UDim2.new(0, 300, 0, 40)
+    Btn.Position = UDim2.new(0.5, -150, 0, yPos)
+    Btn.BackgroundColor3 = Color3.fromRGB(30, 25, 35)
+    Btn.Text = text
+    Btn.TextColor3 = Color3.fromRGB(255, 10, 130)
+    Btn.TextSize = 18
+    Btn.Font = Enum.Font.GothamBold
+    Btn.Parent = Frame
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 10)
+    corner.Parent = Btn
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(255, 10, 130)
+    stroke.Thickness = 1
+    stroke.Parent = Btn
+
+    return Btn
+end
+
+-- 🌸 BUTTONS
+local InfWinsBtn = createButton("Inf Wins", 200)
+local AutoSpeedBtn = createButton("Auto Speed", 260)
+local AutoRebirthBtn = createButton("Auto Rebirth", 320)
+
+-- 🌸 INF WINS (firetouchinterest + stops correctly)
+local infWins = false
+InfWinsBtn.MouseButton1Click:Connect(function()
+    infWins = not infWins
+    InfWinsBtn.Text = infWins and "Inf Wins: ON" or "Inf Wins"
+
+    if infWins then
+        task.spawn(function()
+            local target = workspace:WaitForChild("GiveWins"):WaitForChild("Button13"):WaitForChild("Touch")
+            while infWins do
+                local char = player.Character
+                if char then
+                    local root = char:FindFirstChild("HumanoidRootPart")
+                    if root then
+                        firetouchinterest(root, target, 0)
+                        firetouchinterest(root, target, 1)
+                    end
+                end
+                task.wait(0.5) -- 2x per second
+            end
+        end)
+    end
+end)
+
+-- 🌸 AUTO SPEED (smooth, non‑laggy, still very fast)
+local autoSpeed = false
+AutoSpeedBtn.MouseButton1Click:Connect(function()
+    autoSpeed = not autoSpeed
+    AutoSpeedBtn.Text = autoSpeed and "Auto Speed: ON" or "Auto Speed"
+
+    if autoSpeed then
+        task.spawn(function()
+            while autoSpeed do
+                -- 5 fires every 0.005 sec = 100/sec
+                for i = 1, 5 do
+                    ReplicatedStorage.Events.AddSpeed:FireServer()
+                end
+                task.wait(0.005)
+            end
+        end)
+    end
+end)
+
+-- 🌸 AUTO REBIRTH (0.25 sec + stops correctly)
+local autoRebirth = false
+AutoRebirthBtn.MouseButton1Click:Connect(function()
+    autoRebirth = not autoRebirth
+    AutoRebirthBtn.Text = autoRebirth and "Auto Rebirth: ON" or "Auto Rebirth"
+
+    if autoRebirth then
+        task.spawn(function()
+            while autoRebirth do
+                ReplicatedStorage.Events.RequestRebirth:InvokeServer()
+                task.wait(0.25)
+            end
+        end)
+    end
+end)
+
+-- 🌸 DRAGGING SYSTEM (unchanged)
+local dragToggle = false
+local dragStart = nil
+local startPos = nil
+
+local function updateDrag(input)
+    local delta = input.Position - dragStart
+    Frame.Position = UDim2.new(
+        startPos.X.Scale,
+        startPos.X.Offset + delta.X,
+        startPos.Y.Scale,
+        startPos.Y.Offset + delta.Y
+    )
+end
+
+Frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragToggle = true
+        dragStart = input.Position
+        startPos = Frame.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragToggle = false
+            end
+        end)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragToggle and input.UserInputType == Enum.UserInputType.MouseMovement then
+        updateDrag(input)
+    end
+end)
